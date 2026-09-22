@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48" width="160" height="48" role="img" aria-label="JUZI">
+  <circle cx="24" cy="24" r="14" fill="none" stroke="#fafafa" stroke-width="3"></circle>
+  <circle cx="24" cy="24" r="5" fill="#fafafa"></circle>
+  <text x="48" y="31" fill="#fafafa" font-family="system-ui, sans-serif" font-size="20" font-weight="700" letter-spacing="3">JUZI</text>
+</svg>

@@ -1,12 +1,19 @@
-// 全局常量(见 docs/admin.md 的目录分区约定)。
-export const SYSTEM_NAME = "CMS 管理后台";
+// 全局常量(目录分区约定见 apps/admin/AGENTS.md)。
 
-export const TOKEN_STORAGE_KEY = "cms.admin.token";
+export const SYSTEM_NAME = "水印相框";
 
-// 后台网页挂在网关的 /admin 子路径下(见 docs/mvp-plan.md 阶段 8):
-// 同时是路由 basename(runtime.config.ts)与 layout 剥离前缀的同一事实源。
-export const APP_BASENAME = "/admin";
+// 路由 basename 与资源前缀同源(D11),值在构建期由 source.define 内联。
+// Pages 子路径部署下为 `/photo-watermark`,本地/根路径部署下为 "/"。
+export const APP_BASENAME = __APP_BASE_PATH__;
 
-// 公共页脚版权文案(占位;TODO:上线时替换为真实部署主体)。
-// 年份固定写入文案而非运行时取当前时间,保证渲染结果可测试。
-export const COPYRIGHT_TEXT = "© 2026 CMS Template";
+// 公共页脚版权文案,年份写死而非运行时取值,保证渲染结果可测。
+export const COPYRIGHT_TEXT = "© 2026 水印相框";
+
+// 静态资源清单(阶段 6)与主题字体(阶段 9)共用的资源路径事实源。
+export const FRAMES_CATALOG_PATH = "frames.json";
+export const LOGOS_CATALOG_PATH = "logos.json";
+
+// 断点:与 arco Grid 的 xs/sm 分界一致,<768 视为移动端(整壳 Sider→Drawer);
+// >=1024 视为桌面(相框列表一行 4 列),两者之间为平板(一行 3 列)。
+export const MOBILE_BREAKPOINT = 768;
+export const DESKTOP_BREAKPOINT = 1024;

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "frames": [
+    {
+      "id": "plain-frame",
+      "name": "基础黑框",
+      "thumbnail": "assets/thumbs/plain-frame.svg",
+      "sortOrder": 10
+    }
+  ]
+}

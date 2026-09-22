@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" width="320" height="240" role="img" aria-label="基础黑框缩略图">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b4a63"></stop>
+      <stop offset="1" stop-color="#8a6a52"></stop>
+    </linearGradient>
+    <linearGradient id="strip" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#09090b" stop-opacity="0.9"></stop>
+      <stop offset="1" stop-color="#09090b" stop-opacity="0"></stop>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="240" fill="#09090b"></rect>
+  <rect width="320" height="240" fill="url(#sky)"></rect>
+  <circle cx="238" cy="72" r="22" fill="#f4d9b0" opacity="0.85"></circle>
+  <path d="M0 176l64-52 52 40 46-56 58 62 44-30 56 46v54H0z" fill="#1d2431" opacity="0.9"></path>
+  <rect y="144" width="320" height="96" fill="url(#strip)"></rect>
+  <rect x="11.5" y="208.1" width="37" height="21.6" rx="1" fill="#fafafa"></rect>
+  <text x="29.9" y="219.6" fill="#09090b" font-family="system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="middle">JUZI</text>
+  <path d="M54.7 211.2v14.4" stroke="#fafafa" stroke-opacity="0.55" stroke-width="1"></path>
+  <text x="61" y="217.4" fill="#fafafa" font-family="system-ui, sans-serif" font-size="6.5" letter-spacing="0.3">35mm  f/1.8  1/250s  ISO100</text>
+  <text x="61" y="228" fill="#fafafa" fill-opacity="0.78" font-family="system-ui, sans-serif" font-size="6.5">ILCE-7M4     FE 35mm F1.8</text>
+</svg>

@@ -7,8 +7,6 @@ node_modules
 pnpm-lock.yaml
 playwright-report
 test-results
-apps/admin/src/api/generated/
-apps/admin/src/api/controllers.gen.ts
 apps/server/.gen-bundle/
 # dotfile 无扩展名,prettier 推不出 parser(两个执行卡实测同因)
 apps/*/.env.example

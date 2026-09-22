@@ -1,0 +1,130 @@
+/* 相框列表页(阶段 12):颜色一律取 Arco CSS 变量(主题层见 @arco-themes/react-juzi001),
+   不写死色值、不做暗色分支;纯视觉的端差异走媒体查询。 */
+
+/* 真实卡片与占位卡共用外壳:占位卡尺寸必须与真实卡片一致,否则清单到位那一刻布局会跳。 */
+.frame-card,
+.frame-card-placeholder {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--color-text-1);
+  text-decoration: none;
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border-2);
+  border-radius: var(--border-radius-medium);
+}
+
+.frame-card {
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* hover 只是桌面的加分项:移动端靠 .frame-card-cta 常驻的「去导出」标示可点。 */
+.frame-card:hover {
+  border-color: var(--primary-6);
+  box-shadow: 0 0 0 1px var(--primary-6);
+}
+
+/* 键盘可达:focus-visible 必须有可见反馈,否则 Tab 到卡片无从判断落点。 */
+.frame-card:focus-visible {
+  border-color: var(--primary-6);
+  outline: 2px solid var(--primary-6);
+  outline-offset: 2px;
+}
+
+/* 固定宽高比 + cover:手机 2 列下缩略图只裁不压扁。 */
+.frame-card-media {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  overflow: hidden;
+  background: var(--color-fill-1);
+}
+
+.frame-card-thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.frame-card-name {
+  padding: 8px 12px;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 进入标记行:margin-top: auto 让它在不同名字长度下都贴底,44px 是触摸目标下限。 */
+.frame-card-cta {
+  display: flex;
+  min-height: 44px;
+  margin-top: auto;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--primary-6);
+  font-size: 13px;
+  border-top: 1px solid var(--color-border-1);
+}
+
+.frame-card-cta svg {
+  font-size: 12px;
+}
+
+/* 覆盖 arco 骨架图占位的固定 48px 与小间距,让它铺满缩略图位。 */
+.frame-card-placeholder-figure,
+.frame-card-placeholder-figure .arco-skeleton-header,
+.frame-card-placeholder-figure .arco-skeleton-image {
+  width: 100%;
+  height: 100%;
+}
+
+.frame-card-placeholder-figure .arco-skeleton-image {
+  margin-right: 0;
+  border-radius: 0;
+}
+
+.frame-card-placeholder-name {
+  padding: 12px;
+}
+
+/* 装载失败提示不必铺满整行,窄一些读起来更省力。 */
+.frames-error {
+  max-width: 560px;
+}
+
+.frames-error-detail {
+  margin-top: 4px;
+  color: var(--color-text-2);
+  font-size: 13px;
+}
+
+.frames-empty {
+  padding: 48px 0;
+}
+
+.frames-empty-hint {
+  margin-top: 4px;
+  color: var(--color-text-3);
+  font-size: 13px;
+}
+
+/* 移动端的排布收窄走列数标记类,而不是再写一条 767px 媒体查询:列数判定已经由
+   hooks/use-responsive 给出,断点再抄一遍就是两处事实源,改断点时必然漂移。 */
+.frame-grid--mobile .frame-card-name {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.frame-grid--mobile .frame-card-cta {
+  font-size: 12px;
+}
+
+.frame-grid--mobile .frame-card-placeholder-name {
+  padding: 8px;
+}

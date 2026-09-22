@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48" width="160" height="48" role="img" aria-label="STUDIO">
+  <g fill="none" stroke="#fafafa" stroke-width="3">
+    <circle cx="24" cy="24" r="14"></circle>
+    <path d="M24 10l12 7M38 31L24 38M10 31l12-7"></path>
+  </g>
+  <circle cx="24" cy="24" r="4" fill="#fafafa"></circle>
+  <text x="48" y="31" fill="#fafafa" font-family="system-ui, sans-serif" font-size="18" font-weight="700" letter-spacing="4">STUDIO</text>
+</svg>

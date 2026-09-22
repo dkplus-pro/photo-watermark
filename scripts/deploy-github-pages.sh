@@ -43,4 +43,9 @@ if [[ ! -f "$ARTIFACT_DIR/index.html" ]]; then
   exit 1
 fi
 
+# SPA 深链兜底(D11):Pages 无 rewrite 能力,子路由直接刷新会 404。
+# 复制一份 404.html,浏览器拿到 404 状态码但资源前缀是绝对路径,SPA 仍能接管渲染。
+cp "$ARTIFACT_DIR/index.html" "$ARTIFACT_DIR/404.html"
+ci_notice "GitHub Pages SPA fallback written: $ARTIFACT_DIR/404.html"
+
 ci_notice "GitHub Pages artifact ready: $ARTIFACT_DIR"

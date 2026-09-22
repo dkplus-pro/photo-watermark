@@ -6,7 +6,7 @@
 
 pnpm + Turborepo monorepo,7 个应用(`apps/mobile` 为 Flutter 工程,不在 pnpm workspace):
 
-- `apps/admin` — Modern.js + React 19 + Arco Design 管理后台
+- `apps/admin` — Modern.js + React 19 + Arco Design 的**纯静态「水印相框」批量导出工具**(无服务端、无登录,发布到 GitHub Pages,规范见 [apps/admin/AGENTS.md](apps/admin/AGENTS.md))
 - `apps/server` — Go API 服务(admin/site/app/h5 四受众,见 multi-audience-contracts)
 - `apps/site` — Modern.js SSR 对外网站(消费 `openapi/site.yaml`,规范见 [docs/site.md](docs/site.md))
 - `apps/h5` — Modern.js SSR 活动 H5(匿名公开受众,消费 `openapi/h5/`,dev 端口 18082)
@@ -14,12 +14,12 @@ pnpm + Turborepo monorepo,7 个应用(`apps/mobile` 为 Flutter 工程,不在 pn
 - `apps/miniapp` — Taro 4 + React 微信小程序(匿名公开受众,消费 `openapi/app/`)
 - `apps/mobile` — Flutter 手机端最小包(匿名公开受众,消费 `openapi/app/`,手写 http 调用;不在 pnpm workspace、禁止出现 package.json,平台目录需 `flutter create .` 补齐)
 
-`openapi/` 目录是前后端唯一接口契约,按受众分 4 份:`admin.yaml` 供 `apps/admin` 与 server 的 gen/admin,`site.yaml` 供 `apps/site` 与 server 的 gen/site,`app/` 与 `h5/` 两个多文件骨架目录供 mobile/desktop/miniapp 与 h5 及 server 的 gen/app、gen/h5;两侧代码均由对应契约生成。
-当前按 [docs/mvp-plan.md](docs/mvp-plan.md) 分阶段交付管理后台 MVP;新增功能先改 `openapi/` 下对应受众契约落契约,再写实现。
+`openapi/` 目录是前后端唯一接口契约,按受众分 4 份:`admin.yaml` 供 server 的 gen/admin(消费端 `apps/admin` 已改为纯静态工具、脱离契约链,见规则 4-10),`site.yaml` 供 `apps/site` 与 server 的 gen/site,`app/` 与 `h5/` 两个多文件骨架目录供 mobile/desktop/miniapp 与 h5 及 server 的 gen/app、gen/h5;两侧代码均由对应契约生成。
+当前按 [docs/mvp-plan.md](docs/mvp-plan.md) 分阶段交付管理后台 MVP,按 [docs/watermark-frame-plan.md](docs/watermark-frame-plan.md) 交付「水印相框」静态工具;新增功能先改 `openapi/` 下对应受众契约落契约,再写实现(admin 例外:它没有接口,新增能力 = 新增相框样式 + 清单条目)。
 
 ## 常用命令(仓库根执行)
 
-- `pnpm dev` — 一条命令并行启动 admin + server
+- `pnpm dev` — 一条命令并行启动各前端 app 与 server(admin 是纯静态站,起它不需要 server)
 - `pnpm gen:api` — 从 openapi/ 契约生成各 app 类型与 server 接口代码
 - `pnpm lint` / `pnpm typecheck` / `pnpm test`
 - `pnpm verify` — 提交前完整校验,改动后必须通过
@@ -28,24 +28,22 @@ pnpm + Turborepo monorepo,7 个应用(`apps/mobile` 为 Flutter 工程,不在 pn
 
 ### 接口契约
 
-1. 接口改动先改 `openapi/` 下对应受众契约(admin 改 `admin.yaml`,site 改 `site.yaml`,C 端改 `app/`,H5 改 `h5/`),再 `pnpm gen:api`,然后补实现;
+1. 接口改动先改 `openapi/` 下对应受众契约(admin 受众改 `admin.yaml`(现在只有 server 侧消费,`apps/admin` 已脱离契约链),site 改 `site.yaml`,C 端改 `app/`,H5 改 `h5/`),再 `pnpm gen:api`,然后补实现;
    1a. 契约共 4 份:`admin.yaml`、`site.yaml` 为单文件;`app/`、`h5/` 为多文件骨架目录(`openapi.yaml` 入口 + `paths/` + `components/schemas/`)。生成链差异:server 侧 oapi-codegen 不支持 schema 片段跨文件 `$ref`,app/h5 先经 `redocly bundle` 再生成(gen/app、gen/h5);JS 侧 orval 用 `input.parserOptions.externalRefs.allow: ["*"]` 直接解析多文件;
-2. 生成物(`apps/admin/src/api/generated/`、`apps/admin/src/api/controllers.gen.ts`、`apps/server/gen/`)禁止手改;前端接口函数一律调用 orval 生成物,Controller 绑定层由 gen:api 从契约 tags 自动生成,不手写请求函数;横切逻辑(token/401/错误提示)只写在 `src/api/client.ts`(mutator 入口);
+2. 生成物(各 app 的 `src/api/generated/`、`src/api/controllers.gen.ts`、`apps/server/gen/`)禁止手改;前端接口函数一律调用 orval 生成物,Controller 绑定层由 gen:api 从契约 tags 自动生成,不手写请求函数;横切逻辑(token/401/错误提示)只写在 `src/api/client.ts`(mutator 入口);`apps/admin` 无接口层,不参与本条;
 3. 两侧不允许手写与契约重复的接口类型。
 
-### admin(详见 [docs/admin.md](docs/admin.md))
+### admin =「水印相框」纯静态工具(详见 [apps/admin/AGENTS.md](apps/admin/AGENTS.md),方案见 [docs/watermark-frame-plan.md](docs/watermark-frame-plan.md))
 
-4. UI 优先用 `@arco-design/web-react` 基础组件,不满足才自定义;
-5. 页面照抄 arco-design-pro 范式:列表页 = `Card` + 查询 `Form` + `Table` + `Pagination`,新建编辑用 `Modal` + `Form`;
-   5a. 菜单项必须带图标(`config/menu.tsx` 的 `MenuConfig.icon`),新菜单禁止裸文字;
-   5b. 新页面必须套 `PageContainer`(`src/components/page-container.tsx`),面包屑/操作区放内容区顶部,禁止放顶栏,PageContainer 不渲染页内标题;
-   5c. 列表分页必须全量(经 `src/hooks/use-table-query.ts`:总数 + 每页数量切换 10/20/50/100 + 跳页,切 pageSize 重置第 1 页);
-   5d. 列表页照抄 arco-pro search-table 范式(查询 Form 含查询/重置按钮、loading、空态);表单按复杂度二分:简单 `Modal`+`Form`,复杂用分组表单页(`Card` 分组 + 底部固定操作栏,范例见系统配置页);
-6. 目录分区:`src/api`(client.ts / controllers.ts / queryKeys.ts / generated)/ `components` / `hooks` / `routes`(页面)/ `store`(全局状态)/ `utils` / `constants` / `config`;
-7. 复用规则:2 个及以上页面用 → 提到 `src/components`、`src/hooks`;单页面用 → 留在页面目录内;客户端全局状态 → zustand(`src/store/`,每个领域一个 `useXxxStore`),不与 Modern.js model 等其他方案混用;
-8. 服务端状态一律 TanStack Query(`useQuery`/`useMutation` + `SystemController.xxx()` 直调,queryKey 集中在 `src/api/queryKeys.ts`),禁止 useEffect 手动拉接口、禁止 ahooks 的 useRequest;操作按钮用 `<AuthGate permission="...">` 包裹(无权限置灰 + Tooltip),菜单可见性按最小颗粒度判定(模块下任一 api 权限码即可);
-9. 工具函数:通用 React 逻辑优先 ahooks,纯数据操作优先 lodash(按方法引入 `lodash/xxx`),两者覆盖不了才自写;
-10. 单文件超约 300 行必须拆分,页面主入口只做数据编排。
+4. UI 优先用 `@arco-design/web-react` 基础组件,不满足才自定义;主题走 `@arco-themes/react-juzi001/theme.css` 覆盖在 `arco.css` 之后引入,不做暗色模式;
+   4a. **本 app 无服务端、无登录、无鉴权**:禁止出现 API 客户端、token 处理、`AuthGate`、TanStack Query / ahooks `useRequest`;唯一允许的 `fetch` 是同源取 `public/` 下的清单 JSON;
+5. 页面只剩两个:`/frames`(相框列表,网格一行 桌面 4 / 平板 3 / 手机 2,item 是缩略图卡片)与 `/frames/:styleId/export`(导出表单)。左侧菜单只有「水印相框 → 相框列表」一项;菜单项必须带图标;新页面仍套 `PageContainer`(子路由用它的 `breadcrumb` prop 显式给尾项,因为 `matchMenuTrail` 走的是菜单声明);
+   5a. **无列表分页/查询表单/增删改**这类后台范式,规则 5c/5d 的 arco-pro search-table 与分页要求不再适用;表单页按字段复杂度直接用 `Form` + `Card`,不需要吸底栏;
+6. 目录分区:`src/utils`(`utils/frame/` 是渲染引擎,本 app 唯一的「业务内核」目录例外,允许放纯函数与 Worker)/ `components` / `hooks` / `routes`(页面)/ `store`(全局状态)/ `config` / `constants` / `types.ts`(运行时数据形状);
+7. 复用规则:2 个及以上页面用 → 提到 `src/components`、`src/hooks`;单页面用 → 留在页面目录内;客户端全局状态 → zustand(`src/store/`,每个领域一个 `useXxxStore`),持久化只允许 `partialize` 白名单写用户偏好,禁止持久化 `File` 与进行中的任务状态;
+8. **渲染纪律(硬性)**:批量渲染必须走 Web Worker 池(`src/utils/frame/worker-pool.ts`)且并发数由 `memoryAwareConcurrency()` 给出(禁止按 `hardwareConcurrency` 开并发)、canvas 面积上限靠探测;相框样式的绘制走代码注册表(`style-registry.ts`),`public/frames.json` 只做清单;绘制几何一律纯比例,禁止 `clamp` 绝对像素;EXIF 继承必须零拷贝拼接(`piexifjs` 只碰 ≤256KB 头部,禁止把整幅图 latin1 字符串化);
+9. 工具函数:通用 React 逻辑优先 ahooks(断点判定统一 `src/hooks/use-responsive.ts`),纯数据操作优先 lodash(按方法引入 `lodash/xxx`),两者覆盖不了才自写;静态资源引用一律经 `src/utils/asset-url.ts` 的 `assetUrl()`(Pages 子路径部署下硬编码 `/assets/...` 必 404);
+10. 单文件超约 300 行必须拆分,页面主入口只做数据编排;构建产物只发布 admin 一个 app 到 GitHub Pages,`basePath` 必须同时喂 `output.assetPrefix`、路由 `basename` 与 `assetUrl` 三处(单一事实源见 apps/admin/AGENTS.md 第 10 节)。
 
 ### server(详见 [docs/server.md](docs/server.md))
 
@@ -71,7 +69,7 @@ pnpm + Turborepo monorepo,7 个应用(`apps/mobile` 为 Flutter 工程,不在 pn
 
 ### 新端(h5 / desktop / miniapp / mobile,方案见 [docs/monorepo-expansion-plan.md](docs/monorepo-expansion-plan.md))
 
-22. 三个 JS 新端(h5/desktop/miniapp)统一目录与依赖:`src/` 下 `api/`(orval 生成物 + `client.ts` mutator + `controllers.gen.ts`)、`component/`、`config/`、`consts/`、`hooks/`、`store/`(zustand);统一依赖 `zustand`、`lodash-es`、`axios`、`ahooks`、`orval`;orval + controllers.gen 范式照 admin(desktop 的 API 层在 `src/renderer/src/api/`),生成物禁止手改(规则 2 同样适用);
+22. 三个 JS 新端(h5/desktop/miniapp)统一目录与依赖:`src/` 下 `api/`(orval 生成物 + `client.ts` mutator + `controllers.gen.ts`)、`component/`、`config/`、`consts/`、`hooks/`、`store/`(zustand);统一依赖 `zustand`、`lodash-es`、`axios`、`ahooks`、`orval`;orval + controllers.gen 范式照 site(desktop 的 API 层在 `src/renderer/src/api/`;`apps/admin` 无接口层,不参与本条),生成物禁止手改(规则 2 同样适用);
     22a. h5 壳架构细化见 [apps/h5/AGENTS.md](apps/h5/AGENTS.md):core 分层与依赖方向、arco 按需纪律、SSR 安全(动态初始化+env 构建期内联)、监控埋点只经 `src/core/` 抽象、loader 降级契约;
 23. h5/desktop/miniapp 均为匿名公开受众,边界与 site 一致(只读 + 网关放行前缀):`client.ts` 只做 `{code, message, data}` 信封解包与错误提示,禁止 token 注入与 401 跳转;契约已预留 `bearerAuth`,C 端用户体系落地前不实现鉴权逻辑;
 24. miniapp 运行时无 XMLHttpRequest,网络层在 mutator 内直桥 `Taro.request`(即 `wx.request`;`axios-miniprogram-adapter` 与 axios 1.x 不兼容,已实测),只复用 axios 的 mutator 签名约定;`API_BASE_URL` 固定绝对地址,写在 `src/config/`;
