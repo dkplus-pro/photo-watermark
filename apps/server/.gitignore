@@ -1,0 +1,2 @@
+# gen:api 的 redocly bundle 中间产物,禁止提交
+.gen-bundle/

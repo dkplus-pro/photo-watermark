@@ -1,0 +1,28 @@
+get:
+  operationId: versionCheck
+  summary: 应用版本检查(匿名公开;配置读 env,admin 配置页列后续阶段)
+  tags:
+    - app
+  security: []
+  parameters:
+    - name: platform
+      in: query
+      required: true
+      description: 目标平台
+      schema:
+        type: string
+        enum: [ios, android]
+    - name: version
+      in: query
+      required: true
+      description: 当前版本号(x.y.z 数字串;非法串按无更新处理)
+      schema:
+        type: string
+        example: "1.2.3"
+  responses:
+    "200":
+      description: 版本检查结果
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/version-check.yaml#/VersionCheckResult

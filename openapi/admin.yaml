@@ -1,0 +1,2060 @@
+openapi: 3.0.3
+info:
+  title: CMS Admin API
+  version: 0.2.0
+  description: |
+    CMS 管理后台接口契约,前后端唯一事实源。所有路径字面带 /api/admin 前缀(网关按此前缀转发)。
+
+    修改流程:改本文件 → `pnpm gen:api` 双端生成 → 双端实现。
+    生成物(apps/admin/src/api/generated/、apps/server/gen/)禁止手改。
+
+    响应包装:传输层统一为 `{code, message, data, logID}`(code 等于 HTTP 状态码;
+    logID 为本次请求的日志关联 ID,同时回传在 `X-Log-Id` 响应头,客户端可经
+    `X-Request-Id` 请求头透传网关生成的 ID);错误响应为 `{code, message, logID}`。
+    本契约描述的是 data 载荷,admin 在 mutator(src/api/client.ts)统一解包。
+tags:
+  - name: system
+    description: 系统公共接口
+  - name: auth
+    description: 认证与账号
+  - name: users
+    description: 用户管理
+  - name: roles
+    description: 角色管理
+  - name: permissions
+    description: 权限点
+  - name: logs
+    description: 操作日志
+  - name: configs
+    description: 系统配置
+  - name: dicts
+    description: 字典管理
+  - name: media
+    description: 媒体资源(图片/视频)
+  - name: uploads
+    description: 大文件分片上传(会话制;初始化按媒体类型拆分端点以静态绑定权限码)
+security:
+  - bearerAuth: []
+paths:
+  /api/admin/healthz:
+    get:
+      operationId: healthz
+      summary: 健康检查
+      tags:
+        - system
+      security: []
+      responses:
+        "200":
+          description: 服务健康
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthzResponse"
+  /api/admin/auth/login:
+    post:
+      operationId: login
+      summary: 登录
+      tags:
+        - auth
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: 登录成功,返回 token 与当前用户
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: 用户名或密码错误
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: 账号已被禁用
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/auth/logout:
+    post:
+      operationId: logout
+      summary: 退出登录(MVP 为前端清 token,服务端不失效)
+      tags:
+        - auth
+      responses:
+        "204":
+          description: 退出成功
+  /api/admin/auth/me:
+    get:
+      operationId: getMe
+      summary: 当前用户信息(含角色与权限码,供动态菜单预留)
+      tags:
+        - auth
+      responses:
+        "200":
+          description: 当前用户
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInfo"
+  /api/admin/auth/password:
+    put:
+      operationId: changePassword
+      summary: 修改密码(校验旧密码)
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "204":
+          description: 修改成功
+        "400":
+          description: 旧密码错误或参数不合法
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/users:
+    get:
+      operationId: listUsers
+      summary: 用户列表
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - name: keyword
+          in: query
+          schema:
+            type: string
+          description: 按用户名/昵称模糊匹配
+        - name: status
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: 用户分页列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+    post:
+      operationId: createUser
+      summary: 新建用户
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateRequest"
+      responses:
+        "200":
+          description: 新建后的用户
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserItem"
+        "409":
+          description: 用户名已存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/users/{id}:
+    get:
+      operationId: getUser
+      summary: 用户详情
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: 用户详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserItem"
+    put:
+      operationId: updateUser
+      summary: 编辑用户基础信息
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateRequest"
+      responses:
+        "200":
+          description: 更新后的用户
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserItem"
+    delete:
+      operationId: deleteUser
+      summary: 删除用户(不可删自己与内置管理员)
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: 删除成功
+        "403":
+          description: 不可操作自己或内置管理员
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/users/{id}/status:
+    patch:
+      operationId: updateUserStatus
+      summary: 启用/禁用用户(不可操作自己)
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StatusRequest"
+      responses:
+        "204":
+          description: 更新成功
+        "403":
+          description: 不可操作自己
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/users/{id}/roles:
+    put:
+      operationId: updateUserRoles
+      summary: 分配角色(全量覆盖)
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleIdsRequest"
+      responses:
+        "204":
+          description: 分配成功
+  /api/admin/roles:
+    get:
+      operationId: listRoles
+      summary: 角色列表
+      tags:
+        - roles
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - name: keyword
+          in: query
+          schema:
+            type: string
+          description: 按角色名/编码模糊匹配
+        - name: status
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: 角色分页列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleListResponse"
+    post:
+      operationId: createRole
+      summary: 新建角色
+      tags:
+        - roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleRequest"
+      responses:
+        "200":
+          description: 新建后的角色
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleItem"
+        "409":
+          description: 角色编码已存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/roles/all:
+    get:
+      operationId: listAllRoles
+      summary: 全量角色(分配角色下拉用,仅需登录)
+      tags:
+        - roles
+      responses:
+        "200":
+          description: 全量角色
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoleBrief"
+  /api/admin/roles/{id}:
+    get:
+      operationId: getRole
+      summary: 角色详情(含权限点 ID)
+      tags:
+        - roles
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: 角色详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleItem"
+    put:
+      operationId: updateRole
+      summary: 编辑角色
+      tags:
+        - roles
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleRequest"
+      responses:
+        "200":
+          description: 更新后的角色
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleItem"
+        "403":
+          description: 内置角色不可修改编码
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      operationId: deleteRole
+      summary: 删除角色(仍有用户绑定时拒绝)
+      tags:
+        - roles
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: 删除成功
+        "403":
+          description: 内置角色不可删除
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: 角色仍有用户绑定
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/roles/{id}/permissions:
+    put:
+      operationId: updateRolePermissions
+      summary: 角色分配权限(全量覆盖)
+      tags:
+        - roles
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PermissionIdsRequest"
+      responses:
+        "204":
+          description: 分配成功
+  /api/admin/permissions:
+    get:
+      operationId: listPermissions
+      summary: 全量权限点树(menu + api)
+      tags:
+        - permissions
+      responses:
+        "200":
+          description: 权限点树
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PermissionNode"
+  /api/admin/operation-logs:
+    get:
+      operationId: listOperationLogs
+      summary: 操作日志分页列表
+      tags:
+        - logs
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - name: username
+          in: query
+          schema:
+            type: string
+          description: 按操作人模糊匹配
+        - name: resource
+          in: query
+          schema:
+            type: string
+          description: 资源类型精确匹配,如 user / role
+        - name: action
+          in: query
+          schema:
+            type: string
+          description: 动作精确匹配,如 user.delete
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - success
+              - failed
+          description: 成功/失败筛选
+        - name: startTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: 操作日志分页
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationLogListResponse"
+  /api/admin/configs/{group}:
+    get:
+      operationId: getConfig
+      summary: 读取配置组(目前仅 system;存储配置已迁环境变量,见 docs/mvp-plan.md 阶段 6)
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/ConfigGroup"
+      responses:
+        "200":
+          description: 配置组键值列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigGroupResponse"
+    put:
+      operationId: updateConfig
+      summary: 整组更新配置
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/ConfigGroup"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigUpdateRequest"
+      responses:
+        "204":
+          description: 更新成功
+  /api/admin/dicts:
+    get:
+      operationId: listDicts
+      summary: 字典列表(全量,keyword 可选)
+      tags:
+        - dicts
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 字典列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Dict"
+    post:
+      operationId: createDict
+      summary: 新建字典
+      tags:
+        - dicts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DictUpsertRequest"
+      responses:
+        "200":
+          description: 新建后的字典
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dict"
+        "409":
+          description: 字典编码已存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/dicts/{id}:
+    put:
+      operationId: updateDict
+      summary: 编辑字典
+      tags:
+        - dicts
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DictUpsertRequest"
+      responses:
+        "200":
+          description: 更新后的字典
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dict"
+        "409":
+          description: 字典编码已存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      operationId: deleteDict
+      summary: 删除字典(级联删除字典项)
+      tags:
+        - dicts
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: 删除成功
+  /api/admin/dicts/{id}/status:
+    patch:
+      operationId: updateDictStatus
+      summary: 字典上下线(启停)
+      tags:
+        - dicts
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StatusRequest"
+      responses:
+        "204":
+          description: 更新成功
+  /api/admin/dicts/{id}/entries:
+    put:
+      operationId: replaceDictEntries
+      summary: 整组覆写字典项(编辑弹窗一次保存)
+      tags:
+        - dicts
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DictEntriesRequest"
+      responses:
+        "204":
+          description: 覆写成功
+  /api/admin/dicts/{code}/items:
+    get:
+      operationId: listDictItems
+      summary: 某字典的字典项列表
+      tags:
+        - dicts
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 字典项列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DictEntry"
+    post:
+      operationId: createDictItem
+      summary: 新建字典项
+      tags:
+        - dicts
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DictEntryUpsertRequest"
+      responses:
+        "200":
+          description: 新建后的字典项
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DictEntry"
+        "409":
+          description: 字典项值重复
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/dicts/{code}/items/{itemId}:
+    put:
+      operationId: updateDictItem
+      summary: 编辑字典项
+      tags:
+        - dicts
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DictEntryUpsertRequest"
+      responses:
+        "200":
+          description: 更新后的字典项
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DictEntry"
+        "409":
+          description: 字典项值重复
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      operationId: deleteDictItem
+      summary: 删除字典项
+      tags:
+        - dicts
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: 删除成功
+  /api/admin/images:
+    post:
+      operationId: uploadImage
+      summary: 上传图片(校验类型/大小,提取宽高与格式)
+      tags:
+        - media
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                groupId:
+                  type: integer
+                  format: int64
+                  description: 可选,上传到的分组 ID;缺省或 0 为未分组
+      responses:
+        "200":
+          description: 上传后的图片资源
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageAsset"
+        "400":
+          description: 非图片类型、超过大小限制或分组不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      operationId: listImages
+      summary: 图片分页列表
+      tags:
+        - media
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/MediaGroupId"
+      responses:
+        "200":
+          description: 图片分页
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageListResponse"
+  /api/admin/images/{id}:
+    get:
+      operationId: getImage
+      summary: 图片详情
+      tags:
+        - media
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: 图片资源
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageAsset"
+    delete:
+      operationId: deleteImage
+      summary: 删除图片(级联删除底层文件与介质)
+      tags:
+        - media
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: 删除成功
+  /api/admin/videos:
+    post:
+      operationId: uploadVideo
+      summary: 上传视频(meta 预留时长/分辨率)
+      tags:
+        - media
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                groupId:
+                  type: integer
+                  format: int64
+                  description: 可选,上传到的分组 ID;缺省或 0 为未分组
+      responses:
+        "200":
+          description: 上传后的视频资源
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoAsset"
+        "400":
+          description: 非视频类型、超过大小限制或分组不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      operationId: listVideos
+      summary: 视频分页列表
+      tags:
+        - media
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/MediaGroupId"
+      responses:
+        "200":
+          description: 视频分页
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoListResponse"
+  /api/admin/videos/{id}:
+    get:
+      operationId: getVideo
+      summary: 视频详情
+      tags:
+        - media
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: 视频资源
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoAsset"
+    delete:
+      operationId: deleteVideo
+      summary: 删除视频(级联删除底层文件与介质)
+      tags:
+        - media
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: 删除成功
+  /api/admin/media-groups:
+    get:
+      operationId: listMediaGroups
+      summary: 媒体分组列表(按类型过滤,含组内资源计数)
+      tags:
+        - media
+      parameters:
+        - name: kind
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [image, video]
+          description: 分组所属媒体类型
+      responses:
+        "200":
+          description: 分组列表(含组内资源计数)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaGroupListResponse"
+    post:
+      operationId: createMediaGroup
+      summary: 新建媒体分组(同类型内名称唯一)
+      tags:
+        - media
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMediaGroupRequest"
+      responses:
+        "200":
+          description: 新建后的分组
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaGroup"
+        "400":
+          description: 参数不合法(类型/名称)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: 同类型下分组名已存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/media-groups/{id}:
+    put:
+      operationId: updateMediaGroup
+      summary: 重命名媒体分组(同类型内名称唯一)
+      tags:
+        - media
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMediaGroupRequest"
+      responses:
+        "200":
+          description: 重命名后的分组
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaGroup"
+        "404":
+          description: 分组不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: 同类型下分组名已存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      operationId: deleteMediaGroup
+      summary: 删除媒体分组(组内资源移回未分组,不删资源)
+      tags:
+        - media
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: 删除成功
+        "404":
+          description: 分组不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/images/{id}/group:
+    patch:
+      operationId: moveImageGroup
+      summary: 移动图片到指定分组(0=移出分组)
+      tags:
+        - media
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaGroupMoveRequest"
+      responses:
+        "200":
+          description: 更新后的图片资源
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageAsset"
+        "400":
+          description: 目标分组不存在或不属于图片类型
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: 图片不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/videos/{id}/group:
+    patch:
+      operationId: moveVideoGroup
+      summary: 移动视频到指定分组(0=移出分组)
+      tags:
+        - media
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaGroupMoveRequest"
+      responses:
+        "200":
+          description: 更新后的视频资源
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoAsset"
+        "400":
+          description: 目标分组不存在或不属于视频类型
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: 视频不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/files/{id}/content:
+    get:
+      operationId: getFileContent
+      summary: 文件内容流(图片预览/视频播放共用;登录即可)
+      tags:
+        - media
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: 文件字节流
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: 文件不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/uploads/images:
+    post:
+      operationId: initImageUpload
+      summary: 初始化图片分片上传会话(权限码 media:image:upload)
+      tags:
+        - uploads
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InitUploadRequest"
+      responses:
+        "200":
+          description: 新建的上传会话
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadSession"
+        "400":
+          description: 文件类型不支持、大小非法或分组不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/uploads/videos:
+    post:
+      operationId: initVideoUpload
+      summary: 初始化视频分片上传会话(权限码 media:video:upload;视频上限 2GB)
+      tags:
+        - uploads
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InitUploadRequest"
+      responses:
+        "200":
+          description: 新建的上传会话
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadSession"
+        "400":
+          description: 文件类型不支持、大小非法或分组不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/uploads/{uploadId}/chunks/{index}:
+    put:
+      operationId: uploadChunk
+      summary: 上传分片(octet-stream;重复上传同一分片幂等覆盖;仅会话属主可用)
+      tags:
+        - uploads
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: index
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+          description: 分片索引,0 起
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "204":
+          description: 分片已保存
+        "400":
+          description: 分片索引越界或单片超过 chunkSize
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: 会话不存在(含非属主访问,不区分)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/uploads/{uploadId}:
+    get:
+      operationId: getUploadSession
+      summary: 查询上传会话状态(断点续传用;仅会话属主可用)
+      tags:
+        - uploads
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 会话状态
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadSession"
+        "404":
+          description: 会话不存在(含非属主访问,不区分)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      operationId: abortUpload
+      summary: 中止并清理上传会话(仅会话属主可用)
+      tags:
+        - uploads
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: 会话已清理
+        "404":
+          description: 会话不存在(含非属主访问,不区分)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/uploads/{uploadId}/complete:
+    post:
+      operationId: completeUpload
+      summary: 合并分片并走媒体上传管线(校验/存储/提取/落库/操作日志;仅会话属主可用)
+      tags:
+        - uploads
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 上传完成的媒体资源(精简字段)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadedMedia"
+        "400":
+          description: 分片不齐全或总大小不符
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: 会话不存在(含非属主访问,不区分)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    MediaGroupId:
+      name: groupId
+      in: query
+      schema:
+        type: integer
+        format: int64
+      description: 按分组过滤;不传=全部,0=未分组
+    ConfigGroup:
+      name: group
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+          - system
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: HTTP 状态码
+        message:
+          type: string
+          description: 错误描述
+    PageRequest:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+    PageMeta:
+      type: object
+      required:
+        - total
+      properties:
+        total:
+          type: integer
+          description: 总条数
+    HealthzResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          example: ok
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 64
+        password:
+          type: string
+          minLength: 6
+          maxLength: 64
+    LoginResponse:
+      type: object
+      required:
+        - token
+        - expiresAt
+        - user
+      properties:
+        token:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+          description: token 过期时间
+        user:
+          $ref: "#/components/schemas/UserInfo"
+    ChangePasswordRequest:
+      type: object
+      required:
+        - oldPassword
+        - newPassword
+      properties:
+        oldPassword:
+          type: string
+          minLength: 6
+          maxLength: 64
+        newPassword:
+          type: string
+          minLength: 6
+          maxLength: 64
+    UserInfo:
+      type: object
+      required:
+        - id
+        - username
+        - nickname
+        - status
+        - roles
+        - permissions
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        nickname:
+          type: string
+        email:
+          type: string
+        status:
+          type: boolean
+        roles:
+          type: array
+          description: 角色码列表
+          items:
+            type: string
+        permissions:
+          type: array
+          description: 权限码列表(阶段 2/3 填充)
+          items:
+            type: string
+    UserItem:
+      type: object
+      required:
+        - id
+        - username
+        - nickname
+        - status
+        - roleIds
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        nickname:
+          type: string
+        email:
+          type: string
+        status:
+          type: boolean
+        isBuiltin:
+          type: boolean
+          description: 内置管理员,不可删除/禁用
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+        roleIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    UserListResponse:
+      type: object
+      required:
+        - list
+        - total
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserItem"
+        total:
+          type: integer
+    UserCreateRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 64
+        password:
+          type: string
+          minLength: 6
+          maxLength: 64
+        nickname:
+          type: string
+          maxLength: 64
+        email:
+          type: string
+          maxLength: 128
+        status:
+          type: boolean
+          default: true
+        roleIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    UserUpdateRequest:
+      type: object
+      required:
+        - nickname
+      properties:
+        nickname:
+          type: string
+          maxLength: 64
+        email:
+          type: string
+          maxLength: 128
+    StatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: boolean
+    RoleIdsRequest:
+      type: object
+      required:
+        - roleIds
+      properties:
+        roleIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    RoleItem:
+      type: object
+      required:
+        - id
+        - code
+        - name
+        - status
+        - isBuiltin
+        - permissionIds
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+        name:
+          type: string
+        remark:
+          type: string
+        status:
+          type: boolean
+        isBuiltin:
+          type: boolean
+        permissionIds:
+          type: array
+          description: 角色拥有的权限点 ID
+          items:
+            type: integer
+            format: int64
+    RoleListResponse:
+      type: object
+      required:
+        - list
+        - total
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleItem"
+        total:
+          type: integer
+    RoleBrief:
+      type: object
+      required:
+        - id
+        - code
+        - name
+        - status
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+        name:
+          type: string
+        status:
+          type: boolean
+    RoleRequest:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        remark:
+          type: string
+          maxLength: 255
+        status:
+          type: boolean
+          default: true
+    PermissionIdsRequest:
+      type: object
+      required:
+        - permissionIds
+      properties:
+        permissionIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    PermissionNode:
+      type: object
+      required:
+        - id
+        - code
+        - name
+        - type
+        - parentId
+        - children
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - menu
+            - api
+        parentId:
+          type: integer
+          format: int64
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/PermissionNode"
+    OperationLogItem:
+      type: object
+      required:
+        - id
+        - userId
+        - action
+        - resource
+        - description
+        - status
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        username:
+          type: string
+          description: 操作人快照;登录失败记尝试的登录名
+        action:
+          type: string
+          description: 资源.动作,如 user.delete
+        resource:
+          type: string
+        resourceId:
+          type: string
+        description:
+          type: string
+          description: 人话描述,如"删除用户 张三(zhangsan)"
+        status:
+          type: string
+          enum:
+            - success
+            - failed
+        ip:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    OperationLogListResponse:
+      type: object
+      required:
+        - list
+        - total
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/OperationLogItem"
+        total:
+          type: integer
+    ConfigItem:
+      type: object
+      required:
+        - key
+        - value
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+          description: 原样字符串,结构化数据自行 JSON 编码
+        remark:
+          type: string
+    ConfigGroupResponse:
+      type: object
+      required:
+        - group
+        - items
+      properties:
+        group:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigItem"
+    ConfigUpdateRequest:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigItem"
+    Dict:
+      type: object
+      required:
+        - id
+        - code
+        - name
+        - status
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+        name:
+          type: string
+        remark:
+          type: string
+        status:
+          type: boolean
+    DictUpsertRequest:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        remark:
+          type: string
+          maxLength: 255
+        status:
+          type: boolean
+          default: true
+    DictEntry:
+      type: object
+      required:
+        - id
+        - dictId
+        - label
+        - value
+        - sort
+        - status
+      properties:
+        id:
+          type: integer
+          format: int64
+        dictId:
+          type: integer
+          format: int64
+        label:
+          type: string
+        value:
+          type: string
+        sort:
+          type: integer
+        status:
+          type: boolean
+    DictEntryUpsertRequest:
+      type: object
+      required:
+        - label
+        - value
+      properties:
+        label:
+          type: string
+          minLength: 1
+          maxLength: 64
+        value:
+          type: string
+          minLength: 1
+          maxLength: 64
+        sort:
+          type: integer
+        status:
+          type: boolean
+          default: true
+    ImageAsset:
+      type: object
+      required:
+        - id
+        - fileId
+        - title
+        - origName
+        - size
+        - url
+        - groupId
+        - groupName
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+        fileId:
+          type: integer
+          format: int64
+          description: 底层文件 ID,内容走 /files/{fileId}/content
+        title:
+          type: string
+        origName:
+          type: string
+        size:
+          type: integer
+          format: int64
+          description: 字节
+        width:
+          type: integer
+          description: 提取的宽(px)
+        height:
+          type: integer
+          description: 提取的高(px)
+        format:
+          type: string
+          description: 实际格式,如 png / jpeg
+        url:
+          type: string
+          description: 外网访问地址(CDN 直链);local 存储为空串,前端回退 /files/{fileId}/content
+        groupId:
+          type: integer
+          format: int64
+          description: 所属分组 ID,0=未分组
+        groupName:
+          type: string
+          description: 所属分组名,未分组为空串
+        createdAt:
+          type: string
+          format: date-time
+    ImageListResponse:
+      type: object
+      required:
+        - list
+        - total
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImageAsset"
+        total:
+          type: integer
+    VideoAsset:
+      type: object
+      required:
+        - id
+        - fileId
+        - title
+        - origName
+        - size
+        - url
+        - groupId
+        - groupName
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+        fileId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        origName:
+          type: string
+        size:
+          type: integer
+          format: int64
+          description: 字节
+        durationSeconds:
+          type: number
+          nullable: true
+          description: 时长(秒);MVP 未接 ffprobe 时为空
+        resolution:
+          type: string
+          nullable: true
+          description: 分辨率,如 1920x1080;MVP 未接 ffprobe 时为空
+        url:
+          type: string
+          description: 外网访问地址(CDN 直链);local 存储为空串,前端回退 /files/{fileId}/content
+        groupId:
+          type: integer
+          format: int64
+          description: 所属分组 ID,0=未分组
+        groupName:
+          type: string
+          description: 所属分组名,未分组为空串
+        createdAt:
+          type: string
+          format: date-time
+    VideoListResponse:
+      type: object
+      required:
+        - list
+        - total
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/VideoAsset"
+        total:
+          type: integer
+    MediaGroup:
+      type: object
+      required:
+        - id
+        - kind
+        - name
+        - mediaCount
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+        kind:
+          type: string
+          enum: [image, video]
+          description: 分组所属媒体类型
+        name:
+          type: string
+        mediaCount:
+          type: integer
+          description: 组内资源数
+        createdAt:
+          type: string
+          format: date-time
+    MediaGroupListResponse:
+      type: object
+      required:
+        - list
+        - total
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaGroup"
+        total:
+          type: integer
+    CreateMediaGroupRequest:
+      type: object
+      required:
+        - kind
+        - name
+      properties:
+        kind:
+          type: string
+          enum: [image, video]
+          description: 分组所属媒体类型
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+    UpdateMediaGroupRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+    MediaGroupMoveRequest:
+      type: object
+      required:
+        - groupId
+      properties:
+        groupId:
+          type: integer
+          format: int64
+          description: 目标分组 ID,0=移出分组
+    DictEntriesRequest:
+      type: object
+      required:
+        - entries
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/DictEntryUpsertRequest"
+    InitUploadRequest:
+      type: object
+      required:
+        - fileName
+        - size
+      properties:
+        fileName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 原始文件名(扩展名决定类型校验)
+        size:
+          type: integer
+          format: int64
+          minimum: 1
+          description: 文件总字节数
+        groupId:
+          type: integer
+          format: int64
+          description: 可选,上传到的分组 ID;缺省或 0 为未分组
+    UploadSession:
+      type: object
+      required:
+        - uploadId
+        - kind
+        - fileName
+        - size
+        - chunkSize
+        - chunkCount
+        - uploadedIndexes
+      properties:
+        uploadId:
+          type: string
+          description: 会话 ID,后续分片/状态/合并/中止均以此定位
+        kind:
+          type: string
+          enum: [image, video]
+          description: 媒体类型
+        fileName:
+          type: string
+        size:
+          type: integer
+          format: int64
+          description: 文件总字节数
+        chunkSize:
+          type: integer
+          format: int64
+          description: 单片字节数(最后一片可小于该值)
+        chunkCount:
+          type: integer
+          description: 分片总数
+        uploadedIndexes:
+          type: array
+          description: 已落盘分片索引(0 起,升序),断点续传据此跳过
+          items:
+            type: integer
+    UploadedMedia:
+      type: object
+      required:
+        - id
+        - kind
+        - url
+        - origName
+        - size
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 媒体资源 ID
+        kind:
+          type: string
+          enum: [image, video]
+        url:
+          type: string
+          description: 外网访问地址(CDN 直链);local 存储为空串,前端回退 /files/{fileId}/content
+        origName:
+          type: string
+        size:
+          type: integer
+          format: int64
+          description: 字节

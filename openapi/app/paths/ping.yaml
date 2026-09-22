@@ -1,0 +1,13 @@
+get:
+  operationId: ping
+  summary: 联通性检查(占坑期 hello-world)
+  tags:
+    - app
+  security: []
+  responses:
+    "200":
+      description: 联通性检查结果
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ping.yaml#/Ping

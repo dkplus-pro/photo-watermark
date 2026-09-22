@@ -1,0 +1,25 @@
+{
+  "name": "@repo/prettier-config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared Prettier configuration for this monorepo.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./index.js"
+  },
+  "main": "./index.js",
+  "scripts": {
+    "build": "node --check index.js",
+    "clean": "rm -rf .turbo dist",
+    "lint": "prettier --check .",
+    "test": "node -e \"import('./index.js').then((m) => { if (!m.default.trailingComma) process.exit(1); })\"",
+    "typecheck": "node --check index.js"
+  },
+  "dependencies": {
+    "prettier-plugin-packagejson": "3.0.2"
+  },
+  "peerDependencies": {
+    "prettier": ">=3.0.0"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "name": "monorepo-template",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A production-ready Turborepo and pnpm monorepo template.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "turbo run build",
+    "build:admin": "pnpm --filter @monorepo-template/admin run build",
+    "build:pages": "bash scripts/deploy-github-pages.sh",
+    "ci": "bash scripts/ci.sh",
+    "clean": "turbo run clean",
+    "commitlint": "commitlint",
+    "dev": "turbo run dev --parallel",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "gen:api": "turbo run gen:api",
+    "lint": "turbo run lint && pnpm run lint:root",
+    "lint:root": "eslint . --max-warnings=0",
+    "prepare": "husky",
+    "test": "pnpm run test:unit && turbo run test && pnpm run test:e2e",
+    "test:e2e": "playwright test",
+    "test:unit": "jest --config jest.config.cjs",
+    "typecheck": "turbo run typecheck",
+    "verify": "bash scripts/verify.sh"
+  },
+  "lint-staged": {
+    "*.{json,md,mdx,css,scss,yaml,yml}": [
+      "prettier --write"
+    ],
+    "*.{js,cjs,mjs,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.0",
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.61.1",
+    "@repo/commitlint-config": "workspace:*",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/tsconfig": "workspace:*",
+    "@types/jest": "^30.0.0",
+    "eslint": "10.6.0",
+    "husky": "9.1.7",
+    "jest": "^30.4.2",
+    "lint-staged": "17.0.8",
+    "prettier": "3.9.4",
+    "prettier-plugin-packagejson": "3.0.2",
+    "turbo": "2.10.4",
+    "typescript": "6.0.3"
+  },
+  "packageManager": "pnpm@11.10.0",
+  "engines": {
+    "node": ">=20.19.5",
+    "pnpm": ">=10.1.0"
+  }
+}

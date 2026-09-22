@@ -1,0 +1,42 @@
+.site-header {
+  border-bottom: 1px solid var(--color-neutral-3);
+  background: #fff;
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  height: 56px;
+}
+
+.site-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-1);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.site-logo {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* 桌面横向菜单铺满右半区,保持 Arco 底部指示线贴住页头下缘。 */
+.site-nav {
+  flex: 1;
+  justify-content: flex-end;
+  border-bottom: none;
+  background: transparent;
+}
+
+.site-mobile-trigger {
+  font-size: 20px;
+}

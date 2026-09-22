@@ -1,0 +1,5 @@
+{
+  "$comment": "site 产物体积预算(gzip 字节,基于 dist/static 客户端资产)。超限会令 check:budgets 红灯;确有增量需求时在此调整并在提交说明里写理由。首版预算在阶段 8 以实测基线上浮约 10% 钉定:js gzip 330kB→365、css gzip 12kB→15。",
+  "jsTotalGzipKb": 365,
+  "cssTotalGzipKb": 15
+}

@@ -1,0 +1,190 @@
+/* JSBridge 调试页(/jsbridge-test):不引 arco 组件,样式自足;px 书写经 postcss px-to-vw 转换(设计稿宽 375)。 */
+.jsb-page {
+  width: 100%;
+}
+
+.jsb-page-title {
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text-1, #1d2129);
+}
+
+.jsb-page-loading {
+  margin: 24px 0;
+  font-size: 14px;
+  color: var(--color-text-3, #86909c);
+  text-align: center;
+}
+
+.jsb-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--color-fill-2, #f2f3f5);
+  color: var(--color-text-2, #4e5969);
+}
+
+.jsb-badge--app {
+  background: #e8ffea;
+  color: #00b42a;
+}
+
+.jsb-banner {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  background: #fff7e8;
+  color: #d25f00;
+}
+
+.jsb-group {
+  margin-top: 16px;
+}
+
+.jsb-group-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-1, #1d2129);
+}
+
+.jsb-card {
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid var(--color-border-2, #e5e6eb);
+  border-radius: 8px;
+  background: var(--color-bg-1, #fff);
+}
+
+.jsb-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.jsb-card-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-1, #1d2129);
+}
+
+.jsb-card-method {
+  font-size: 12px;
+  color: var(--color-text-3, #86909c);
+}
+
+.jsb-card-desc {
+  margin: 4px 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-3, #86909c);
+}
+
+.jsb-card-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 64px;
+  padding: 8px;
+  border: 1px solid var(--color-border-2, #e5e6eb);
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-1, #1d2129);
+  resize: vertical;
+}
+
+.jsb-btn {
+  padding: 6px 16px;
+  border: 1px solid var(--color-border-2, #e5e6eb);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--color-bg-1, #fff);
+  color: var(--color-text-1, #1d2129);
+  cursor: pointer;
+}
+
+.jsb-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.jsb-btn--primary {
+  border-color: #165dff;
+  background: #165dff;
+  color: #fff;
+}
+
+.jsb-card .jsb-btn {
+  margin-top: 8px;
+}
+
+.jsb-result {
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.jsb-result--ok {
+  background: #e8ffea;
+  color: #00b42a;
+}
+
+.jsb-result--error {
+  background: #ffece8;
+  color: #f53f3f;
+}
+
+.jsb-result-data {
+  margin: 0;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.jsb-result-elapsed {
+  margin: 4px 0 0;
+}
+
+.jsb-event-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.jsb-event-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border-2, #e5e6eb);
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--color-text-1, #1d2129);
+}
+
+.jsb-event-logs {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.jsb-event-log {
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  background: var(--color-fill-2, #f2f3f5);
+  color: var(--color-text-2, #4e5969);
+}
+
+.jsb-event-log + .jsb-event-log {
+  margin-top: 4px;
+}

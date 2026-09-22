@@ -1,0 +1,6 @@
+# oapi-codegen 配置(admin 契约):生成物(gen/admin/)禁止手改,改接口请编辑 openapi/admin.yaml 后重新执行 pnpm gen:api
+package: admin
+output: gen/admin/gen.go
+generate:
+  models: true
+  std-http-server: true

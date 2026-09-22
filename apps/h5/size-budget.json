@@ -1,0 +1,6 @@
+{
+  "$comment": "h5 产物体积预算(原始字节,非 gzip)。超限会令 check:size 红灯;确有增量需求时在此调整并在提交说明里写理由。首版预算在阶段 3.1 以实测基线钉定:js 3950kB→4800(+21%)、css 10kB→20(按需样式生效)、html 6kB→20。",
+  "jsTotal": { "maxKb": 4800 },
+  "cssTotal": { "maxKb": 20 },
+  "htmlTotal": { "maxKb": 20 }
+}

@@ -1,0 +1,13 @@
+{
+  "extends": "@repo/tsconfig/react-app.json",
+  "compilerOptions": {
+    "composite": true
+  },
+  "include": [
+    "src/renderer/src/**/*.ts",
+    "src/renderer/src/**/*.tsx",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
+  ],
+  "exclude": ["node_modules", "out"]
+}

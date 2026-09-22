@@ -1,0 +1,19 @@
+body {
+  margin: 0;
+}
+
+/* 整页纵向骨架:页头/页脚固定高度,主内容区撑满剩余视口高度。 */
+.site-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.site-main {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}

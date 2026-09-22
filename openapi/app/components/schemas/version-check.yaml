@@ -1,0 +1,25 @@
+VersionCheckResult:
+  type: object
+  required:
+    - hasUpdate
+    - forceUpdate
+    - latestVersion
+    - downloadUrl
+    - releaseNotes
+  properties:
+    hasUpdate:
+      type: boolean
+      description: 是否有新版本(当前版本号非法或未配置最新版本时恒 false)
+    forceUpdate:
+      type: boolean
+      description: 是否强制更新(仅 hasUpdate=true 时可能为 true)
+    latestVersion:
+      type: string
+      example: "1.4.0"
+      description: 最新版本号;未配置时回显请求版本号
+    downloadUrl:
+      type: string
+      description: 下载地址;未配置为空串
+    releaseNotes:
+      type: string
+      description: 更新说明;未配置为空串

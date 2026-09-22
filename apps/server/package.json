@@ -1,0 +1,17 @@
+{
+  "name": "@monorepo-template/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CMS Go API server, wired into the pnpm/turbo workflow via npm scripts.",
+  "scripts": {
+    "build": "go build -o bin/server ./cmd/server",
+    "clean": "rm -rf bin data",
+    "dev": "go run ./cmd/server",
+    "gen:api": "go tool oapi-codegen -config oapi.admin.cfg.yaml ../../openapi/admin.yaml && go tool oapi-codegen -config oapi.site.cfg.yaml ../../openapi/site.yaml && redocly bundle ../../openapi/app/openapi.yaml -o .gen-bundle/app.yaml && go tool oapi-codegen -config oapi.app.cfg.yaml .gen-bundle/app.yaml && redocly bundle ../../openapi/h5/openapi.yaml -o .gen-bundle/h5.yaml && go tool oapi-codegen -config oapi.h5.cfg.yaml .gen-bundle/h5.yaml",
+    "lint": "go vet ./...",
+    "test": "go test ./..."
+  },
+  "devDependencies": {
+    "@redocly/cli": "^2.53.3"
+  }
+}

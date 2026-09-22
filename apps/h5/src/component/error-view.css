@@ -1,0 +1,27 @@
+/* 错误/降级视图:居中提示 + 可选重试按钮(375 设计稿口径,px 构建期转 vw)。 */
+.h5-error-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 16px;
+  text-align: center;
+}
+
+.h5-error-view-message {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-text-1, #1d2129);
+}
+
+.h5-error-view-description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-3, #86909c);
+}
+
+.h5-error-view-action {
+  max-width: 160px;
+}

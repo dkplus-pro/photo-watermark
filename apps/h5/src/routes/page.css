@@ -1,0 +1,8 @@
+/* 活动 H5 首页(布局样式见 src/component/page-shell.css 与 share-header.css)。 */
+.h5-home-subtitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-3, #86909c);
+  text-align: center;
+}

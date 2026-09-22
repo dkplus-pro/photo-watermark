@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+allowBuilds:
+  "@parcel/watcher": true
+  "@swc/core": true
+  "@tarojs/binding": true
+  "@tarojs/cli": true
+  core-js: true
+  core-js-pure: true
+  esbuild: true
+  unrs-resolver: true
+minimumReleaseAgeExclude:
+  - electron@44.4.3

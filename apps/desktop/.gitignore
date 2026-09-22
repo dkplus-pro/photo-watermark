@@ -1,0 +1,5 @@
+# electron-vite 构建产物(默认 outDir,package.json main 指向 out/main/index.js)
+out/
+
+# composite tsconfig 的增量缓存
+*.tsbuildinfo

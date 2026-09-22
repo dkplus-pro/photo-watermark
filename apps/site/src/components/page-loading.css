@@ -1,0 +1,40 @@
+/* 骨架屏占位样式(仅 page-loading 组件使用):灰阶色块 + 呼吸动画。
+   色值取 Arco 中性填充色(fill-2),带 CSS 变量兜底,主题收口(阶段 2 site-theme)
+   后无需改动。 */
+.page-loading {
+  padding: 24px 0;
+}
+
+.page-loading-block {
+  background: var(--color-fill-2);
+  border-radius: 4px;
+  animation: page-loading-pulse 1.2s ease-in-out infinite;
+}
+
+.page-loading-title {
+  height: 28px;
+  width: 40%;
+  margin-bottom: 16px;
+}
+
+.page-loading-line {
+  height: 16px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.page-loading-line-short {
+  width: 60%;
+  margin-bottom: 0;
+}
+
+@keyframes page-loading-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}

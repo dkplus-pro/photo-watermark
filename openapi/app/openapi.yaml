@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: CMS App API
+  version: 0.1.0
+  description: |
+    C 端应用共享 API(mobile Flutter / desktop Electron / miniapp Taro),占坑期为匿名公开、只读。
+    路径一律带 /api/app 前缀,网关按此放行。
+    响应与 admin 同约定:`{code, message, data, logID}`(logID 同时回传在 `X-Log-Id` 响应头);
+    错误响应为 `{code, message, logID}`,用 HTTP 状态码 + message 表达。
+    响应 schema 只描述 data 载荷(信封由服务端统一包装)。
+    约定:C 端用户认证预留 bearerAuth;占坑期端点一律匿名(security: [] 覆盖);
+    DTO 按对外需要裁剪(不原样暴露 admin 模型);媒体字段直接给 CDN 直链。
+servers:
+  - url: /
+tags:
+  - name: app
+paths:
+  /api/app/ping:
+    $ref: ./paths/ping.yaml
+  /api/app/version/check:
+    $ref: ./paths/version-check.yaml
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []

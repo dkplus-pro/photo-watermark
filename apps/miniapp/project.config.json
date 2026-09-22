@@ -1,0 +1,15 @@
+{
+  "compileType": "miniprogram",
+  "miniprogramRoot": "./dist",
+  "projectname": "cms-miniapp",
+  "description": "CMS 微信小程序端(Taro 4 + React,C 端)。appid 占坑期为微信测试号 touristappid,申请到正式 appid 后替换本文件的 appid 字段(也可用 TARO_APP_ID 环境变量在构建时覆盖)。",
+  "appid": "touristappid",
+  "setting": {
+    "urlCheck": true,
+    "es6": false,
+    "enhance": false,
+    "compileHotReLoad": false,
+    "postcss": false,
+    "minified": false
+  }
+}

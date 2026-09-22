@@ -1,0 +1,14 @@
+{
+  "extends": "@repo/tsconfig/node.json",
+  "compilerOptions": {
+    "composite": true
+  },
+  "include": [
+    "electron.vite.config.ts",
+    "vitest.config.ts",
+    "orval.config.ts",
+    "src/main/**/*",
+    "src/preload/**/*"
+  ],
+  "exclude": ["node_modules", "out"]
+}

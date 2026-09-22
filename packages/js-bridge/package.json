@@ -1,0 +1,35 @@
+{
+  "name": "@repo/js-bridge",
+  "version": "0.0.0",
+  "private": true,
+  "description": "JSBridge 协议包(js↔native Promise 化 call/emit;零第三方运行时依赖,源码直出,消费端 bundler 转译)。",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "node -e \"console.log('js-bridge: source-only package, no build')\"",
+    "clean": "rm -rf .turbo coverage",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/tsconfig": "workspace:*",
+    "@types/node": "^24.10.2",
+    "@vitest/coverage-v8": "^5.0.1",
+    "eslint": "10.6.0",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

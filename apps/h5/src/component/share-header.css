@@ -1,0 +1,32 @@
+/* 分享头部:标题区在左、操作插槽在右(375 设计稿口径,px 构建期转 vw)。 */
+.h5-share-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 32px 16px 12px;
+}
+
+.h5-share-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.h5-share-header-title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.3;
+  color: var(--color-text-1, #1d2129);
+  word-break: break-all;
+}
+
+.h5-share-header-description {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-3, #86909c);
+}
+
+.h5-share-header-extra {
+  flex-shrink: 0;
+}

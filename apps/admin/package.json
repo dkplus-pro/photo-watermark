@@ -1,0 +1,52 @@
+{
+  "name": "@monorepo-template/admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "modern build",
+    "build:github-pages": "modern build",
+    "deploy:github-pages": "pnpm --workspace-root run build:pages",
+    "dev": "modern dev",
+    "gen:api": "orval --config ./orval.config.ts && node ./scripts/generate-controllers.mjs",
+    "lint": "eslint . --max-warnings=0",
+    "serve": "modern serve",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@arco-design/web-react": "^2.66.16",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@modern-js/runtime": "^3.5.0",
+    "@tanstack/react-query": "^5.102.8",
+    "@visactor/react-vchart": "^2.1.6",
+    "@visactor/vchart-arco-theme": "^1.13.1",
+    "ahooks": "^3.9.7",
+    "axios": "^1.20.0",
+    "lodash": "^4.18.1",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.8",
+    "@modern-js/app-tools": "^3.5.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/lodash": "^4.17.25",
+    "@types/node": "^24.10.2",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "jsdom": "^30.0.1",
+    "orval": "^8.28.1",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
