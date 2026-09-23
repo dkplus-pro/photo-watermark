@@ -56,6 +56,7 @@ import {
 } from "./export-test-harness";
 import { MOBILE_SOFT_LIMIT, useExportStore } from "../../../../src/store/export";
 import { CancelledExportError } from "../../../../src/utils/frame/export-cancel";
+import { DEFAULT_LOGO_SIZE } from "../../../../src/utils/frame/types";
 import type {
   CancelToken,
   FrameExportSummary,
@@ -433,7 +434,8 @@ describe("导出主流程", () => {
       tier: "medium",
       styleId: REGISTERED_STYLE_ID,
       logoMark: "",
-      logoBlob: null
+      logoBlob: null,
+      logoSize: DEFAULT_LOGO_SIZE
     });
     expect(storeState()).toMatchObject({ status: "exporting", total: 2, done: 0, failedCount: 0 });
     expect(screen.getByText("导出进度")).toBeInTheDocument();

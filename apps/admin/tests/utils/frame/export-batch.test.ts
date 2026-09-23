@@ -17,7 +17,7 @@ import { createCancelToken, CancelledExportError } from "../../../src/utils/fram
 import { prepareFrameJobs } from "../../../src/utils/frame/export-jobs";
 import { renderFrameBatch, runFrameExport } from "../../../src/utils/frame/export-pipeline";
 import type { FrameRenderRequest } from "../../../src/utils/frame/types";
-import { JPEG_QUALITY } from "../../../src/utils/frame/types";
+import { DEFAULT_LOGO_SIZE, JPEG_QUALITY } from "../../../src/utils/frame/types";
 
 /**
  * 批次调度单测(被测模块 `src/utils/frame/export-batch.ts`)。
@@ -75,6 +75,7 @@ describe("runFrameExport · Worker 通道的派发与失败收敛", () => {
     expect(request.styleId).toBe("plain-frame");
     expect(request.logoMark).toBe("PH");
     expect(request.logoBlob).toBeNull();
+    expect(request.logoSize).toBe(DEFAULT_LOGO_SIZE);
     expect(request.fields).toEqual({ brand: "FixtureCam" });
     expect(request.target).toEqual({ width: 400, height: 300 });
   });

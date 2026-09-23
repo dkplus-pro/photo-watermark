@@ -2,7 +2,13 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { PLAIN_FRAME_STYLE_ID } from "../utils/frame/style-registry";
-import { DEFAULT_SIZE_TIER, SIZE_TIER_KEYS } from "../utils/frame/types";
+import {
+  DEFAULT_LOGO_SIZE,
+  DEFAULT_SIZE_TIER,
+  LOGO_SIZE_MAX,
+  LOGO_SIZE_MIN,
+  SIZE_TIER_KEYS
+} from "../utils/frame/types";
 import type { FrameFailure, FrameTaskResult, PhotoExif, SizeTierKey } from "../utils/frame/types";
 
 /**
@@ -81,6 +87,8 @@ export interface ExportState {
   sizeTier: SizeTierKey;
   /** 预设 id 来自 logos.json;"custom" 走 customLogoFile;"none" 表示不加 logo。 */
   logoId: string;
+  /** logo大小滑杆档位(5–10 整数,10 = 基准几何)。 */
+  logoSize: number;
   customLogoFile: File | null;
   status: ExportStatus;
   done: number;
@@ -101,6 +109,7 @@ export interface ExportState {
   setStyleId: (id: string) => void;
   setSizeTier: (tier: SizeTierKey) => void;
   setLogoId: (id: string) => void;
+  setLogoSize: (size: number) => void;
   setCustomLogo: (file: File | null) => void;
   beginExport: (total: number) => void;
   markJobDone: (result: FrameTaskResult) => void;
@@ -111,14 +120,15 @@ export interface ExportState {
   reset: () => void;
 }
 
-/** 表单可持久化的用户偏好:只这两项跨会话有意义。 */
-type ExportPreferences = Pick<ExportState, "sizeTier" | "logoId">;
+/** 表单可持久化的用户偏好:只这三项跨会话有意义。 */
+type ExportPreferences = Pick<ExportState, "sizeTier" | "logoId" | "logoSize">;
 
 const initialData = {
   files: [] as ExportFileEntry[],
   styleId: PLAIN_FRAME_STYLE_ID,
   sizeTier: DEFAULT_SIZE_TIER,
   logoId: NO_LOGO_ID,
+  logoSize: DEFAULT_LOGO_SIZE,
   customLogoFile: null as File | null,
   status: "idle" as ExportStatus,
   done: 0,
@@ -131,6 +141,12 @@ const initialData = {
 
 const isSizeTierKey = (value: unknown): value is SizeTierKey =>
   typeof value === "string" && (SIZE_TIER_KEYS as readonly string[]).includes(value);
+
+/** 持久化回读要挡的是手改 localStorage 的越界值:档位只认 5–10 的整数。 */
+const isLogoSize = (value: unknown): value is number =>
+  Number.isInteger(value) &&
+  (value as number) >= LOGO_SIZE_MIN &&
+  (value as number) <= LOGO_SIZE_MAX;
 
 // 组件内按需订阅(useExportStore((s) => s.files)),组件外读写走 useExportStore.getState()。
 export const useExportStore = create<ExportState>()(
@@ -207,6 +223,12 @@ export const useExportStore = create<ExportState>()(
       // 理由是单一职责 —— 清单(阶段 6)与表单校验都在页面层,store 不猜用户下一步。
       setLogoId: (logoId) => set((state) => (state.logoId === logoId ? state : { logoId })),
 
+      // 滑杆只会产出 5–10 的整数,但 store 是唯一写入口,越界值(手改/脏调用)直接拒收。
+      setLogoSize: (logoSize) =>
+        set((state) =>
+          !isLogoSize(logoSize) || state.logoSize === logoSize ? state : { logoSize }
+        ),
+
       setCustomLogo: (file) =>
         set((state) => (state.customLogoFile === file ? state : { customLogoFile: file })),
 
@@ -270,13 +292,13 @@ export const useExportStore = create<ExportState>()(
           return { status: "idle", zipFileName: null, error: null };
         }),
 
-      // 重开表单:清文件与进度,但保留 sizeTier/logoId(用户偏好,不该再选一遍)。
+      // 重开表单:清文件与进度,但保留 sizeTier/logoId/logoSize(用户偏好,不该再选一遍)。
       // customLogoFile 必须清(File 不持久化);故 reload 后 logoId 可能仍是 "custom" 而无文件,
       // 这属于页面必须拦的非法组合(与 setCustomLogo(null) 的边界归属同一条)。
       reset: () =>
         set((state) => {
-          const { sizeTier, logoId } = state;
-          return { ...initialData, sizeTier, logoId };
+          const { sizeTier, logoId, logoSize } = state;
+          return { ...initialData, sizeTier, logoId, logoSize };
         })
     }),
     {
@@ -285,7 +307,8 @@ export const useExportStore = create<ExportState>()(
       // 的僵尸态(进度条永远不动、导出按钮被守卫锁死),所以一条都不落盘。
       partialize: (state): ExportPreferences => ({
         sizeTier: state.sizeTier,
-        logoId: state.logoId
+        logoId: state.logoId,
+        logoSize: state.logoSize
       }),
       // 读取同样只信白名单:手工改过的 storage 与旧版本残留都不允许复活 status/files。
       merge: (persisted, current) => {
@@ -293,7 +316,8 @@ export const useExportStore = create<ExportState>()(
         return {
           ...current,
           sizeTier: isSizeTierKey(saved.sizeTier) ? saved.sizeTier : current.sizeTier,
-          logoId: typeof saved.logoId === "string" ? saved.logoId : current.logoId
+          logoId: typeof saved.logoId === "string" ? saved.logoId : current.logoId,
+          logoSize: isLogoSize(saved.logoSize) ? saved.logoSize : current.logoSize
         };
       }
     }

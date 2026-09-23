@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { FRAME_PALETTE, drawFrameComposition } from "../../../src/utils/frame/frame-drawing";
+import {
+  FRAME_GEOMETRY,
+  FRAME_PALETTE,
+  drawFrameComposition
+} from "../../../src/utils/frame/frame-drawing";
 import {
   PLAIN_FRAME_STYLE_ID,
   getFrameStyle,
@@ -193,9 +197,81 @@ describe("drawFrameComposition 几何比例(D4:去 clamp 后可缩放一致性)"
         expect(value).toBeGreaterThanOrEqual(0);
       }
     }
-    // 无下限兜底后信息条仍然落在画布内
+    // 竖画布:信息条按 portraitStripFactor 折算后仍落在画布内(400×0.2×0.8=64)
     const [x, y, w, h] = numbersOf(argsOf(calls, "fillRect", 1));
-    expect([x, y, w, h]).toEqual([0, 320, 300, 80]);
+    expect([x, y, w, h]).toEqual([0, 336, 300, 64]);
+  });
+
+  it("竖图行距锚定字号:两行间隔与分辨率无关(横图才随条高放大)", () => {
+    const rowGap = (width: number, height: number) => {
+      const { calls } = draw(width, height, FULL_FIELDS);
+      const [firstY] = numbersAt(calls, "fillText", 0).slice(2);
+      const secondY = numbersAt(calls, "fillText", 1)[2];
+      return (secondY - firstY) / (width * FRAME_GEOMETRY.metadataFont);
+    };
+    // 字号乘系数 = portraitRowLineHeight,与 9:16 的条高无关
+    expect(rowGap(600, 800)).toBeCloseTo(FRAME_GEOMETRY.portraitRowLineHeight, 6);
+    expect(rowGap(6000, 8000)).toBeCloseTo(FRAME_GEOMETRY.portraitRowLineHeight, 6);
+    expect(rowGap(1125, 2000)).toBeCloseTo(FRAME_GEOMETRY.portraitRowLineHeight, 6);
+    // 横图行为不变:间隔仍由信息条比例导出
+    const landscape = draw(800, 600, FULL_FIELDS);
+    const landscapeGap =
+      numbersAt(landscape.calls, "fillText", 1)[2] - numbersAt(landscape.calls, "fillText", 0)[2];
+    expect(landscapeGap).toBeCloseTo(600 * 0.2 * (0.7 - 0.48), 6);
+  });
+
+  it("竖图内容块贴底:logo 底板下缘距画布底边 = 字号 × portraitBottomGap", () => {
+    const width = 600;
+    const height = 800;
+    const size = width * FRAME_GEOMETRY.metadataFont;
+    const gap = size * FRAME_GEOMETRY.portraitBottomGap;
+    const stripHeight = height * FRAME_GEOMETRY.stripHeight * FRAME_GEOMETRY.portraitStripFactor;
+    // logo 底板比两行文字高,贴底按底板算块心,文字块整体跟着下沉
+    const centerY = height - gap - (stripHeight * FRAME_GEOMETRY.logoHeight) / 2;
+    const pitch = size * FRAME_GEOMETRY.portraitRowLineHeight;
+    const { calls } = draw(width, height, FULL_FIELDS, { mark: "ACME" });
+    const firstY = numbersAt(calls, "fillText", 1)[2];
+    const secondY = numbersAt(calls, "fillText", 2)[2];
+    expect(firstY).toBeCloseTo(centerY - pitch / 2, 6);
+    expect(secondY).toBeCloseTo(centerY + pitch / 2, 6);
+    const [, plateY, , plateHeight] = numbersAt(calls, "fillRect", 2);
+    expect(plateY + plateHeight).toBeCloseTo(height - gap, 6);
+    expect(plateY + plateHeight / 2).toBeCloseTo(centerY, 6);
+    const [, dividerTop] = numbersAt(calls, "moveTo");
+    const [, dividerBottom] = numbersAt(calls, "lineTo");
+    expect(dividerTop).toBeCloseTo(firstY - size * FRAME_GEOMETRY.portraitDividerOverhang, 6);
+    expect(dividerBottom).toBeCloseTo(secondY + size * FRAME_GEOMETRY.portraitDividerOverhang, 6);
+    // 分隔线以块中心对称,且只包住文字块而不是纵贯整条
+    expect((dividerTop + dividerBottom) / 2).toBeCloseTo(centerY, 6);
+    expect(dividerBottom - dividerTop).toBeLessThan(stripHeight);
+  });
+
+  it("竖图贴底距离按字号折算,与分辨率和高宽比无关", () => {
+    const gapInFonts = (width: number, height: number) => {
+      const { calls } = draw(width, height, FULL_FIELDS, { mark: "ACME" });
+      const [, plateY, , plateHeight] = numbersAt(calls, "fillRect", 2);
+      return (height - (plateY + plateHeight)) / (width * FRAME_GEOMETRY.metadataFont);
+    };
+    expect(gapInFonts(600, 800)).toBeCloseTo(FRAME_GEOMETRY.portraitBottomGap, 6);
+    expect(gapInFonts(6000, 8000)).toBeCloseTo(FRAME_GEOMETRY.portraitBottomGap, 6);
+    expect(gapInFonts(1125, 2000)).toBeCloseTo(FRAME_GEOMETRY.portraitBottomGap, 6);
+  });
+
+  it("竖图无 logo 时文字块自身贴底,块心随行数上移", () => {
+    const width = 600;
+    const height = 800;
+    const size = width * FRAME_GEOMETRY.metadataFont;
+    const gap = size * FRAME_GEOMETRY.portraitBottomGap;
+    // 单行:块高就是一个字高
+    const single = numbersAt(draw(width, height, { focalLength: "50mm" }).calls, "fillText", 0);
+    expect(single[2]).toBeCloseTo(height - gap - size / 2, 6);
+    // 两行:块高 = 行距 + 一个字高,底边仍落在同一 gap
+    const { calls } = draw(width, height, FULL_FIELDS);
+    const firstY = numbersAt(calls, "fillText", 0)[2];
+    const secondY = numbersAt(calls, "fillText", 1)[2];
+    const pitch = size * FRAME_GEOMETRY.portraitRowLineHeight;
+    expect((firstY + secondY) / 2).toBeCloseTo(height - gap - (pitch + size) / 2, 6);
+    expect(secondY + size / 2).toBeCloseTo(height - gap, 6);
   });
 
   it("分隔竖线线宽是全表唯一保留的极值:窄画布兜到 1px", () => {
@@ -309,6 +385,56 @@ describe("drawFrameComposition logo 分支", () => {
     expect(methodsOf(calls, "save")).toHaveLength(1);
     expect(methodsOf(calls, "restore")).toHaveLength(1);
     expect(numbersAt(calls, "fillText", 0)[1]).toBeCloseTo(paddingX + logoWidth + gap * 2, 6);
+  });
+});
+
+describe("drawFrameComposition logo大小 scale", () => {
+  it("缺省即基准:不带 scale 与 scale=1 的位图绘制量完全一致", () => {
+    const base = draw(1200, 900, FULL_FIELDS, { mark: "ACME", bitmap: makeBitmap(400, 200) });
+    const explicit = draw(1200, 900, FULL_FIELDS, {
+      mark: "ACME",
+      bitmap: makeBitmap(400, 200),
+      scale: 1
+    });
+    expect(numbersAt(base.calls, "drawImage", 1)).toEqual(
+      numbersAt(explicit.calls, "drawImage", 1)
+    );
+  });
+
+  it("位图 logo:高与宽度外接框同乘 scale 且保持宽高比,信息条与文字布局不动", () => {
+    const { calls } = draw(1000, 800, FULL_FIELDS, {
+      mark: "ACME",
+      bitmap: makeBitmap(200, 100),
+      scale: 0.5
+    });
+    const [, , logoY, logoWidth, logoHeight] = numbersAt(calls, "drawImage", 1);
+    const scaledHeight = 800 * 0.2 * 0.45 * 0.5;
+    expect(logoHeight).toBeCloseTo(scaledHeight, 6);
+    expect(logoWidth).toBeCloseTo(200 * Math.min((1000 * 0.2 * 0.5) / 200, scaledHeight / 100), 6);
+    // 垂直中心仍是信息条的 logoCenterY:缩放只改大小,不改锚点
+    expect(logoY).toBeCloseTo(640 + 160 * 0.56 - scaledHeight / 2, 6);
+    // 信息条矩形与两行基线仍按原几何
+    expect(numbersAt(calls, "fillRect", 1).slice(1, 2)).toEqual([640]);
+    expect(numbersAt(calls, "fillText", 0)[2]).toBeCloseTo(640 + 160 * 0.48, 6);
+    // 分隔线跟着缩小的 logo 左移(而不是留在基准位置)
+    const dividerX = numbersAt(calls, "moveTo")[0];
+    expect(dividerX).toBeCloseTo(1000 * 0.036 + logoWidth + 1000 * 0.036 * 0.54, 6);
+  });
+
+  it("文字块 logo:底板高/宽与字号都由缩放后的 logo 高导出,垂直中心不变", () => {
+    const { calls } = draw(1000, 800, FULL_FIELDS, { mark: "ACME", scale: 0.5 });
+    const [, plateY, plateWidth, plateHeight] = numbersAt(calls, "fillRect", 2);
+    const scaledHeight = 800 * 0.2 * 0.45 * 0.5;
+    expect(plateHeight).toBeCloseTo(scaledHeight, 6);
+    expect(plateY).toBeCloseTo(640 + 160 * 0.56 - scaledHeight / 2, 6);
+    expect(plateWidth).toBeCloseTo(4 * CHAR_WIDTH + scaledHeight * 0.42 * 2, 6);
+  });
+
+  it("零值:scale=0 产出零高 logo 而不是 NaN/负数(滑杆最小档 5 换算后仍是有限值)", () => {
+    const { calls } = draw(1000, 800, FULL_FIELDS, { mark: "ACME", scale: 0 });
+    const relevant = numbersAt(calls, "fillRect", 2);
+    expect(relevant.every((value) => Number.isFinite(value))).toBe(true);
+    expect(relevant[3]).toBe(0);
   });
 });
 

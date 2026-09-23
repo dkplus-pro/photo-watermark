@@ -39,6 +39,17 @@ export const JPEG_QUALITY = 0.92;
 /** 实时预览固定按长边渲染,与导出档位无关(D18)。 */
 export const PREVIEW_LONG_EDGE = 1200;
 
+// ---------------------------------------------------------------- logo 大小
+
+/**
+ * 「logo大小」滑杆档位:5–10 整数,步长 1。
+ * 10 = 基准档(绘制几何与 `FRAME_GEOMETRY.logoHeight/logoWidth` 完全一致,即滑杆引入前的观感),
+ * 渲染时换算成比例 `logoSize / LOGO_SIZE_MAX` 乘在 logo 高/宽外接框上——几何仍是纯比例(D4)。
+ */
+export const LOGO_SIZE_MIN = 5;
+export const LOGO_SIZE_MAX = 10;
+export const DEFAULT_LOGO_SIZE = LOGO_SIZE_MAX;
+
 // ---------------------------------------------------------------- 绘制数据
 
 /** exifr 解析后的相机元数据;字段缺失即不绘制。 */
@@ -90,10 +101,11 @@ export type DrawFrameComposition = (
   logo?: LogoRenderInput
 ) => void;
 
-/** logo 渲染输入:优先位图,缺位图时用文字块兜底。 */
+/** logo 渲染输入:优先位图,缺位图时用文字块兜底;scale 为 logo 大小比例(缺省 1 = 基准档)。 */
 export interface LogoRenderInput {
   readonly mark: string;
   readonly bitmap?: ImageBitmap;
+  readonly scale?: number;
 }
 
 // ---------------------------------------------------------------- 字体(D9)
@@ -182,6 +194,8 @@ export interface FrameRenderSettings {
   /** 文字兜底始终需要;bitmap 由渲染侧解码 */
   readonly logoMark: string;
   readonly logoBlob: Blob | null;
+  /** logo大小滑杆档位(LOGO_SIZE_MIN..LOGO_SIZE_MAX) */
+  readonly logoSize: number;
 }
 
 /** 单张渲染结果。`fileName` 恒为 `${主名}.jpg`(zip 内同名追加 -2/-3)。 */
@@ -259,6 +273,8 @@ export interface FrameRenderRequest {
   readonly exifHead: Uint8Array | null;
   readonly logoMark: string;
   readonly logoBlob: Blob | null;
+  /** logo大小滑杆档位,渲染侧换算成 scale = logoSize / LOGO_SIZE_MAX */
+  readonly logoSize: number;
 }
 
 /** Worker → 主线程的产物;EXIF 已在 Worker 内注入。 */

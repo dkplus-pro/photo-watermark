@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // 副作用导入:模块加载即把消息循环挂到 Worker 全局(scope)的 onmessage 上。
 import "../../../src/utils/frame/frame.worker";
 import { FrameWorkerPool, createFrameWorkerPool } from "../../../src/utils/frame/worker-pool";
-import { JPEG_QUALITY } from "../../../src/utils/frame/types";
+import { DEFAULT_LOGO_SIZE, JPEG_QUALITY } from "../../../src/utils/frame/types";
 import type {
   FrameRenderRequest,
   FrameWorkerMessage,
@@ -51,7 +51,8 @@ const createRequest = (fileName: string): FrameRenderRequest => ({
   fields: {},
   exifHead: null,
   logoMark: "PH",
-  logoBlob: null
+  logoBlob: null,
+  logoSize: DEFAULT_LOGO_SIZE
 });
 
 // ---------------------------------------------------------------- Worker 替身

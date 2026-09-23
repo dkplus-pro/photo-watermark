@@ -51,6 +51,7 @@ function renderFlow(files = storeFiles()) {
       files,
       styleId: "plain-frame",
       sizeTier: "small",
+      logoSize: 8,
       logo: { logoMark: "JUZI", logoBlob: new Blob(["svg"]) }
     })
   );
@@ -133,7 +134,9 @@ describe("成功分支", () => {
       tier: "small",
       styleId: "plain-frame",
       logoMark: "JUZI",
-      logoBlob: expect.any(Blob)
+      logoBlob: expect.any(Blob),
+      // 滑杆档位原样进设置,scale 换算发生在渲染侧(use-export-flow 不参与)
+      logoSize: 8
     });
     expect(call.token).toMatchObject({ cancelled: false });
     expect(storeState().status).toBe("done");

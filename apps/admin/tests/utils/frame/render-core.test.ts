@@ -5,7 +5,7 @@ import {
   mainThreadSurface,
   renderFrame
 } from "../../../src/utils/frame/render-core";
-import { JPEG_QUALITY } from "../../../src/utils/frame/types";
+import { DEFAULT_LOGO_SIZE, JPEG_QUALITY } from "../../../src/utils/frame/types";
 import type { FrameRenderRequest, OutputSize, RenderSurface } from "../../../src/utils/frame/types";
 
 /**
@@ -217,6 +217,7 @@ const createRequest = (overrides: Partial<FrameRenderRequest> = {}): FrameRender
   exifHead: null,
   logoMark: "PH",
   logoBlob: null,
+  logoSize: DEFAULT_LOGO_SIZE,
   ...overrides
 });
 
@@ -335,7 +336,7 @@ describe("renderFrame:Worker 与主线程共用的单张渲染", () => {
     expect({ width, height }).toEqual({ width: 2000, height: 1500 });
     expect(bitmap.width).toBe(2000);
     expect(fields).toEqual({ exposure: "f/2.8  1/250s  ISO100", model: "X-T5" });
-    expect(logo).toEqual({ mark: "PH" });
+    expect(logo).toEqual({ mark: "PH", scale: 1 });
     expect(scaffold.encoded).toEqual([{ type: "image/jpeg", quality: JPEG_QUALITY }]);
     expect(result).toEqual({ blob: scaffold.jpeg, width: 2000, height: 1500, exifInjected: false });
     expect(decoder.closed).toEqual([{ width: 2000, height: 1500 }]);
@@ -402,7 +403,8 @@ describe("renderFrame:Worker 与主线程共用的单张渲染", () => {
 
     expect(result.width).toBe(2000);
     const logo = drawSpy.mock.calls[0][5];
-    expect(logo).toEqual({ mark: "PH" });
+    // 基准档(10)换算出 scale=1;缺位图即绘制端走文字块
+    expect(logo).toEqual({ mark: "PH", scale: 1 });
     // 源图一次 + logo 一次(抛错),失败的那张没有位图可 close
     expect(decoder.calls).toHaveLength(2);
     expect(decoder.closed).toEqual([{ width: 2000, height: 1500 }]);
@@ -425,6 +427,15 @@ describe("renderFrame:Worker 与主线程共用的单张渲染", () => {
       { width: 2000, height: 1500 },
       { width: 64, height: 32 }
     ]);
+  });
+
+  it("logo大小档位换算成比例:scale = logoSize / LOGO_SIZE_MAX 随请求交给绘制端", async () => {
+    stubCreateImageBitmap(createDecoderScaffold());
+    const scaffold = createCanvasScaffold();
+
+    await renderFrame(createRequest({ logoSize: 5 }), createFakeSurface(scaffold));
+
+    expect(drawSpy.mock.calls[0][5]).toMatchObject({ scale: 0.5 });
   });
 
   it("exifHead 为 null 时不注入、也不调 splice", async () => {

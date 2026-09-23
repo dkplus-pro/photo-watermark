@@ -86,7 +86,8 @@ const requestOf = (unit: RenderUnit, settings: FrameRenderSettings): FrameRender
   fields: unit.job.fields,
   exifHead: unit.job.exifHead,
   logoMark: settings.logoMark,
-  logoBlob: settings.logoBlob
+  logoBlob: settings.logoBlob,
+  logoSize: settings.logoSize
 });
 
 /** 怎么拿到一张的产物:两条渲染路径唯一被允许不同的地方(决策 D6)。 */

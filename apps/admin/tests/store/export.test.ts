@@ -6,7 +6,7 @@
 //   权限缺失 —— 本站无鉴权(纯静态、匿名可用),此一类不适用;
 //   网络失败 —— 本模块不请求网络,failExport 承载上游(流水线/打包)失败消息,有用例;
 //   非法状态迁移 —— exporting 重入 beginExport、done 后回报、取消后回报、终态被失败覆盖,全部要挡。
-// 持久化另开一组:白名单只留 sizeTier/logoId,File 与 status 绝不允许落盘或复活。
+// 持久化另开一组:白名单只留 sizeTier/logoId/logoSize,File 与 status 绝不允许落盘或复活。
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -17,7 +17,12 @@ import {
 } from "../../src/store/export";
 import type { ExportFileEntry } from "../../src/store/export";
 import { PLAIN_FRAME_STYLE_ID } from "../../src/utils/frame/style-registry";
-import { DEFAULT_SIZE_TIER } from "../../src/utils/frame/types";
+import {
+  DEFAULT_LOGO_SIZE,
+  DEFAULT_SIZE_TIER,
+  LOGO_SIZE_MAX,
+  LOGO_SIZE_MIN
+} from "../../src/utils/frame/types";
 import type { FrameFailure, FrameTaskResult } from "../../src/utils/frame/types";
 
 const STORAGE_KEY = "watermark-frame.export";
@@ -287,10 +292,11 @@ describe("导出状态机:合法迁移", () => {
     });
   });
 
-  test("reset 保留档位与 logo 偏好,清掉文件、进度与产物", () => {
+  test("reset 保留档位、logo 与 logo大小偏好,清掉文件、进度与产物", () => {
     snapshot().addFiles([makeFile("keep-me.jpg", 3)]);
     snapshot().setSizeTier("small");
     snapshot().setLogoId(CUSTOM_LOGO_ID);
+    snapshot().setLogoSize(6);
     snapshot().setCustomLogo(makeFile("logo.png", 9));
     snapshot().beginExport(1);
     snapshot().markJobDone(okResult("job-1"));
@@ -300,6 +306,7 @@ describe("导出状态机:合法迁移", () => {
     const state = snapshot();
     expect(state.sizeTier).toBe("small");
     expect(state.logoId).toBe(CUSTOM_LOGO_ID);
+    expect(state.logoSize).toBe(6);
     expect(state.files).toEqual([]);
     expect(state.customLogoFile).toBeNull();
     expect(state).toMatchObject({ status: "idle", done: 0, failedCount: 0, total: 0 });
@@ -444,6 +451,7 @@ describe("表单选项 setter", () => {
     expect(state.styleId).toBe(PLAIN_FRAME_STYLE_ID);
     expect(state.sizeTier).toBe(DEFAULT_SIZE_TIER);
     expect(state.logoId).toBe(NO_LOGO_ID);
+    expect(state.logoSize).toBe(DEFAULT_LOGO_SIZE);
   });
 
   test("setter 同值写入短路,不通知订阅者", () => {
@@ -454,6 +462,7 @@ describe("表单选项 setter", () => {
     snapshot().setSizeTier(tier);
     snapshot().setStyleId(PLAIN_FRAME_STYLE_ID);
     snapshot().setLogoId(NO_LOGO_ID);
+    snapshot().setLogoSize(DEFAULT_LOGO_SIZE);
 
     expect(listener).not.toHaveBeenCalled();
     unsubscribe();
@@ -470,19 +479,37 @@ describe("表单选项 setter", () => {
     expect(snapshot().logoId).toBe(CUSTOM_LOGO_ID);
     expect(snapshot().customLogoFile).toBeNull();
   });
+
+  test("setLogoSize 只收 5–10 的整数:越界、小数与非数字一律拒收", () => {
+    snapshot().setLogoSize(LOGO_SIZE_MIN);
+    expect(snapshot().logoSize).toBe(LOGO_SIZE_MIN);
+
+    snapshot().setLogoSize(LOGO_SIZE_MAX);
+    expect(snapshot().logoSize).toBe(LOGO_SIZE_MAX);
+
+    for (const dirty of [LOGO_SIZE_MIN - 1, LOGO_SIZE_MAX + 1, 7.5, Number.NaN, "6"]) {
+      snapshot().setLogoSize(dirty as unknown as number);
+      expect(snapshot().logoSize).toBe(LOGO_SIZE_MAX);
+    }
+  });
 });
 
 describe("偏好持久化白名单", () => {
-  test("写盘的只有 sizeTier 与 logoId,不含 files/status/File/进度", () => {
+  test("写盘的只有 sizeTier、logoId 与 logoSize,不含 files/status/File/进度", () => {
     snapshot().addFiles([makeFile("a.jpg", 3)]);
     snapshot().setSizeTier("small");
     snapshot().setLogoId(CUSTOM_LOGO_ID);
+    snapshot().setLogoSize(6);
     snapshot().beginExport(1);
 
     const raw = window.localStorage.getItem(STORAGE_KEY);
     expect(raw).not.toBeNull();
     const stored = JSON.parse(raw ?? "{}") as { state: Record<string, unknown> };
-    expect(stored.state).toEqual({ sizeTier: "small", logoId: CUSTOM_LOGO_ID });
+    expect(stored.state).toEqual({
+      sizeTier: "small",
+      logoId: CUSTOM_LOGO_ID,
+      logoSize: 6
+    });
     expect(stored.state).not.toHaveProperty("files");
     expect(stored.state).not.toHaveProperty("status");
     expect(stored.state).not.toHaveProperty("customLogoFile");
@@ -490,7 +517,7 @@ describe("偏好持久化白名单", () => {
     expect(stored.state).not.toHaveProperty("total");
   });
 
-  test("刷新后档位与 logo 生效,而 payload 里被塞进的僵尸态与文件不复活", () => {
+  test("刷新后档位、logo 与 logo大小生效,而 payload 里被塞进的僵尸态与文件不复活", () => {
     snapshot().setSizeTier("original");
     snapshot().setLogoId("preset-silver");
 
@@ -498,6 +525,7 @@ describe("偏好持久化白名单", () => {
       state: {
         sizeTier: "medium",
         logoId: NO_LOGO_ID,
+        logoSize: 7,
         status: "exporting",
         done: 7,
         total: 7,
@@ -511,6 +539,7 @@ describe("偏好持久化白名单", () => {
     const state = snapshot();
     expect(state.sizeTier).toBe("medium");
     expect(state.logoId).toBe(NO_LOGO_ID);
+    expect(state.logoSize).toBe(7);
     expect(state.status).toBe("idle");
     expect(state.done).toBe(0);
     expect(state.files).toEqual([]);
@@ -519,9 +548,12 @@ describe("偏好持久化白名单", () => {
   test("持久化值非法(旧版本残留或手改 storage)时保持当前值,不把 store 写成脏值", () => {
     snapshot().setSizeTier("small");
     snapshot().setLogoId(CUSTOM_LOGO_ID);
+    snapshot().setLogoSize(6);
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ state: { sizeTier: "ultra-hd", logoId: 42 } })
+      JSON.stringify({
+        state: { sizeTier: "ultra-hd", logoId: 42, logoSize: LOGO_SIZE_MAX + 1 }
+      })
     );
 
     rehydrate();
@@ -529,5 +561,6 @@ describe("偏好持久化白名单", () => {
     const state = snapshot();
     expect(state.sizeTier).toBe("small");
     expect(state.logoId).toBe(CUSTOM_LOGO_ID);
+    expect(state.logoSize).toBe(6);
   });
 });

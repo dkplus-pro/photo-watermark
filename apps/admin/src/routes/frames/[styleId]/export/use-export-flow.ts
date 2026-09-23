@@ -33,6 +33,8 @@ export interface UseExportFlowParams {
   files: readonly ExportFileEntry[];
   styleId: string;
   sizeTier: SizeTierKey;
+  /** logo大小滑杆档位 */
+  logoSize: number;
   logo: LogoSettings;
 }
 
@@ -42,7 +44,7 @@ const toUserMessage = (error: unknown): string => {
   return message || "导出失败: 未知错误, 请重试或改用更低档位。";
 };
 
-export function useExportFlow({ files, styleId, sizeTier, logo }: UseExportFlowParams) {
+export function useExportFlow({ files, styleId, sizeTier, logoSize, logo }: UseExportFlowParams) {
   const status = useExportStore((state) => state.status);
   const [modalOpen, setModalOpen] = useState(false);
   const [noFilesHint, setNoFilesHint] = useState(false);
@@ -81,7 +83,13 @@ export function useExportFlow({ files, styleId, sizeTier, logo }: UseExportFlowP
     try {
       const summary = await runFrameExport(
         files.map((entry) => entry.file),
-        { tier: sizeTier, styleId, logoMark: logo.logoMark, logoBlob: logo.logoBlob },
+        {
+          tier: sizeTier,
+          styleId,
+          logoMark: logo.logoMark,
+          logoBlob: logo.logoBlob,
+          logoSize
+        },
         handlers,
         token
       );

@@ -1,4 +1,13 @@
-import { Button, Card, Radio, Skeleton, Space, Typography, Upload } from "@arco-design/web-react";
+import {
+  Button,
+  Card,
+  Radio,
+  Skeleton,
+  Slider,
+  Space,
+  Typography,
+  Upload
+} from "@arco-design/web-react";
 import type { UploadProps } from "@arco-design/web-react";
 import { IconDelete, IconImage } from "@arco-design/web-react/icon";
 import { useMemoizedFn } from "ahooks";
@@ -8,6 +17,7 @@ import { useObjectUrl } from "../../../../../hooks/use-object-url";
 import { CUSTOM_LOGO_ID, NO_LOGO_ID } from "../../../../../store/export";
 import type { LogoCatalogEntry } from "../../../../../types";
 import { assetUrl } from "../../../../../utils/asset-url";
+import { LOGO_SIZE_MAX, LOGO_SIZE_MIN } from "../../../../../utils/frame/types";
 
 import "./components.css";
 
@@ -31,9 +41,12 @@ export interface LogoPickerProps {
   /** 预设 id / CUSTOM_LOGO_ID / NO_LOGO_ID 三选一 */
   value: string;
   customFile: File | null;
+  /** logo大小档位(LOGO_SIZE_MIN..LOGO_SIZE_MAX) */
+  logoSize: number;
   disabled: boolean;
   onChange(id: string): void;
   onCustomFile(file: File | null): void;
+  onLogoSizeChange(size: number): void;
 }
 
 /** 与图片选择器同一口径:原生 `accept` 只做选图器筛选,不在组件里判死用户选的东西。 */
@@ -44,6 +57,7 @@ type UploadItem = NonNullable<UploadProps["fileList"]>[number];
 
 const NO_LOGO_LABEL = "不添加";
 const CUSTOM_LOGO_LABEL = "自定义 logo";
+const LOGO_SIZE_LABEL = "logo大小";
 const CUSTOM_LOGO_MISSING_HINT = "还没有选择自定义图片, 相框会退回用文字标识绘制。";
 
 /** 清单条目的最低可渲染形状:id 必须存在且不与两个哨兵值撞车,展示名缺失时回落 mark/id。 */
@@ -82,9 +96,11 @@ export function LogoPicker({
   loading,
   value,
   customFile,
+  logoSize,
   disabled,
   onChange,
-  onCustomFile
+  onCustomFile,
+  onLogoSizeChange
 }: LogoPickerProps) {
   const options = useMemo(
     () =>
@@ -179,6 +195,25 @@ export function LogoPicker({
           )}
         </div>
       ) : null}
+
+      <div className="logo-size-field">
+        <Typography.Text className="logo-size-label">{LOGO_SIZE_LABEL}</Typography.Text>
+        <Slider
+          // range 模式下 arco 回调是二元组,这里只有单值分支会落到 store。
+          onChange={(next) => {
+            if (typeof next === "number") onLogoSizeChange(next);
+          }}
+          className="logo-size-slider"
+          disabled={disabled}
+          max={LOGO_SIZE_MAX}
+          min={LOGO_SIZE_MIN}
+          step={1}
+          value={logoSize}
+        />
+        <Typography.Text className="logo-size-value" type="secondary">
+          {String(logoSize)}
+        </Typography.Text>
+      </div>
     </Card>
   );
 }

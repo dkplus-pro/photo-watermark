@@ -5,7 +5,8 @@ import {
   previewTargetOf,
   renderPreview
 } from "../../../src/utils/frame/preview-render";
-import { PREVIEW_LONG_EDGE } from "../../../src/utils/frame/types";
+import { DEFAULT_LOGO_SIZE, PREVIEW_LONG_EDGE } from "../../../src/utils/frame/types";
+
 import type { FrameFields, OutputSize } from "../../../src/utils/frame/types";
 
 /**
@@ -67,6 +68,7 @@ const REQUEST = {
   styleId: "plain-frame",
   logoMark: "JUZI",
   logoBlob: null,
+  logoSize: DEFAULT_LOGO_SIZE,
   fields: FIELDS
 };
 
@@ -164,7 +166,9 @@ describe("renderPreview 请求装配", () => {
       fields: FIELDS,
       exifHead: null,
       logoMark: "JUZI",
-      logoBlob
+      logoBlob,
+      // 滑杆档位原样进请求:预览与导出同一换算路径,scale 不在预览侧特判
+      logoSize: DEFAULT_LOGO_SIZE
     });
   });
 

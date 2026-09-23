@@ -24,6 +24,8 @@ export interface PreviewRequest {
   /** logo 的文字兜底;位图解码失败时绘制端会退回这个文字块 */
   logoMark: string;
   logoBlob: Blob | null;
+  /** logo大小滑杆档位(与导出同源,预览所见即导出所得) */
+  logoSize: number;
   fields: FrameFields;
 }
 
@@ -76,7 +78,7 @@ export const previewTargetOf = (source: OutputSize | null): OutputSize | null =>
  * 预览失败不静默成空白图:用户要知道的是「这张图看不了」,不是「工具坏了」。
  */
 export const renderPreview = async (request: PreviewRequest): Promise<Blob> => {
-  const { source, styleId, logoMark, logoBlob, fields } = request;
+  const { source, styleId, logoMark, logoBlob, logoSize, fields } = request;
   // 先查样式再读字节:清单里有、注册表没有的样式,不该为它付一次解码的内存与耗时。
   if (!getFrameStyle(styleId)) {
     throw new Error(`相框样式「${styleId}」未在注册表登记, 无法预览。`);
@@ -96,6 +98,7 @@ export const renderPreview = async (request: PreviewRequest): Promise<Blob> => {
       exifHead: null,
       logoMark,
       logoBlob,
+      logoSize,
       fileName: PREVIEW_OUTPUT_NAME
     } satisfies FrameRenderRequest,
     mainThreadSurface

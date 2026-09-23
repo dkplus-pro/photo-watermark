@@ -185,6 +185,30 @@
   font-size: 12px;
 }
 
+/* logo大小:标签左、数值右、滑杆吃满中间;上下留足行高,移动端才点得到细滑杆。 */
+.logo-size-field {
+  display: flex;
+  margin-top: 16px;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-size-label {
+  flex-shrink: 0;
+  color: var(--color-text-1);
+}
+
+.logo-size-slider {
+  flex: 1;
+  min-width: 120px;
+}
+
+.logo-size-value {
+  flex-shrink: 0;
+  min-width: 20px;
+  text-align: right;
+}
+
 /* ---------------------------------------------------------------- 效果预览 */
 
 /* 预览图按等比铺满卡片宽度:长边 1200 的产物在 320px 宽的手机上只是被 CSS 缩小显示,

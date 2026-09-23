@@ -103,6 +103,7 @@ export default function FrameExportPage() {
   const files = useExportStore((state) => state.files);
   const sizeTier = useExportStore((state) => state.sizeTier);
   const logoId = useExportStore((state) => state.logoId);
+  const logoSize = useExportStore((state) => state.logoSize);
   const customLogoFile = useExportStore((state) => state.customLogoFile);
   const status = useExportStore((state) => state.status);
   const done = useExportStore((state) => state.done);
@@ -114,6 +115,7 @@ export default function FrameExportPage() {
   const setStyleId = useExportStore((state) => state.setStyleId);
   const setSizeTier = useExportStore((state) => state.setSizeTier);
   const setLogoId = useExportStore((state) => state.setLogoId);
+  const setLogoSize = useExportStore((state) => state.setLogoSize);
   const setCustomLogo = useExportStore((state) => state.setCustomLogo);
   const addFiles = useExportStore((state) => state.addFiles);
   const removeFile = useExportStore((state) => state.removeFile);
@@ -126,7 +128,7 @@ export default function FrameExportPage() {
 
   useFilePreparation(files);
   const logo = useLogoSettings(logos, logoId, customLogoFile);
-  const flow = useExportFlow({ files, styleId: readyStyleId ?? "", sizeTier, logo });
+  const flow = useExportFlow({ files, styleId: readyStyleId ?? "", sizeTier, logoSize, logo });
 
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
@@ -213,9 +215,11 @@ export default function FrameExportPage() {
               loading={loading}
               value={logoId}
               customFile={customLogoFile}
+              logoSize={logoSize}
               disabled={flow.busy}
               onChange={setLogoId}
               onCustomFile={setCustomLogo}
+              onLogoSizeChange={setLogoSize}
             />
           </div>
         </Col>
@@ -225,6 +229,7 @@ export default function FrameExportPage() {
             source={firstEntry?.file ?? null}
             logoMark={logo.logoMark}
             logoBlob={logo.logoBlob}
+            logoSize={logoSize}
             fields={previewFields}
             disabled={flow.busy}
           />

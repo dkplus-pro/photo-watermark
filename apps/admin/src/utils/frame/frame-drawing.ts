@@ -69,7 +69,15 @@ export const FRAME_GEOMETRY = {
   /** 仅一行时该行基线 = 信息条顶 + 信息条高 × 0.56 */
   singleRowY: 0.56,
   /** 第二行基线 = 信息条顶 + 信息条高 × 0.7 */
-  secondRowY: 0.7
+  secondRowY: 0.7,
+  /** 竖画布信息条高系数折算(× stripHeight):文字块按条中心居中,条高只需容下两行 */
+  portraitStripFactor: 0.8,
+  /** 竖画布两行行距 = 字号 × 此系数 */
+  portraitRowLineHeight: 1.5,
+  /** 竖画布内容块(logo + 两行)下缘距画布底边 = 字号 × 此系数,与高宽比无关 */
+  portraitBottomGap: 1,
+  /** 竖画布分隔线两端各越过首/末行基线 = 字号 × 此系数(两端对称,故一个系数够用) */
+  portraitDividerOverhang: 0.5
 } as const;
 
 /** 分隔线线宽的像素下限,唯一保留的极值(细分隔线在缩略尺寸下按比例会退化为 0 而消失)。 */
@@ -142,12 +150,12 @@ const drawLogoMark = (
   return markWidth;
 };
 
-/** logo 与 EXIF 文字之间的细分隔竖线。 */
+/** logo 与 EXIF 文字之间的细分隔竖线,端点由调用方按横/竖分支算好绝对 Y。 */
 const drawDivider = (
   context: FrameContext,
   x: number,
-  stripY: number,
-  stripHeight: number,
+  topY: number,
+  bottomY: number,
   width: number
 ) => {
   context.save();
@@ -155,8 +163,8 @@ const drawDivider = (
   context.globalAlpha = FRAME_GEOMETRY.dividerAlpha;
   context.lineWidth = Math.max(MIN_DIVIDER_LINE_WIDTH, width * FRAME_GEOMETRY.dividerLineWidth);
   context.beginPath();
-  context.moveTo(x, stripY + stripHeight * FRAME_GEOMETRY.dividerTop);
-  context.lineTo(x, stripY + stripHeight * FRAME_GEOMETRY.dividerBottom);
+  context.moveTo(x, topY);
+  context.lineTo(x, bottomY);
   context.stroke();
   context.restore();
 };
@@ -179,7 +187,9 @@ export const drawFrameComposition: DrawFrameComposition = (
   context.fillRect(0, 0, width, height);
   context.drawImage(image, 0, 0, width, height);
 
-  const stripHeight = height * FRAME_GEOMETRY.stripHeight;
+  const portrait = height > width;
+  const stripHeight =
+    height * FRAME_GEOMETRY.stripHeight * (portrait ? FRAME_GEOMETRY.portraitStripFactor : 1);
   const stripY = height - stripHeight;
   const paddingX = width * FRAME_GEOMETRY.paddingX;
 
@@ -194,12 +204,39 @@ export const drawFrameComposition: DrawFrameComposition = (
   const firstRow = [fields.focalLength, fields.exposure].filter(Boolean).join(METADATA_SPACER);
   const secondRow = [fields.model, fields.lens].filter(Boolean).join(SECONDARY_SPACER);
 
+  // 横/方图行距沿用信息条比例;竖图条高相对画布更大,按条高比例铺行会把两行撑开,整块居中又
+  // 让水印离画布底边过远(用户两次报障)。竖图改为「贴底」模型:内容块下缘距画布底边恒为
+  // 字号 × portraitBottomGap,行距 = 字号 × portraitRowLineHeight,logo 与文字共用块中心。
+  const metadataSize = width * FRAME_GEOMETRY.metadataFont;
+  const portraitRowPitch = metadataSize * FRAME_GEOMETRY.portraitRowLineHeight;
+  // logo大小滑杆只缩放 logo 自身(高与宽度外接框同乘一个比例),信息条与文字布局不动。
+  const logoScale = logo?.scale ?? 1;
+  const logoHeight = stripHeight * FRAME_GEOMETRY.logoHeight * logoScale;
+  // 两行时对称分布在块中心上下,单行时那行就在中心(与横图 singleRowY 同语义)
+  const bothRows = Boolean(firstRow && secondRow);
+  const portraitRowOffset = bothRows ? portraitRowPitch / 2 : 0;
+  const portraitTextHalf = portraitRowOffset + metadataSize / 2;
+  // logo 底板通常比两行文字高,贴底时按二者中较高的算块心,否则底板会溢出画布下沿。
+  const portraitBlockHalf = logoPresent
+    ? Math.max(logoHeight / 2, portraitTextHalf)
+    : portraitTextHalf;
+  const portraitCenterY =
+    height - metadataSize * FRAME_GEOMETRY.portraitBottomGap - portraitBlockHalf;
+  const firstRowBaselineY = portrait
+    ? portraitCenterY - portraitRowOffset
+    : stripY + stripHeight * (secondRow ? FRAME_GEOMETRY.firstRowY : FRAME_GEOMETRY.singleRowY);
+  const secondRowBaselineY = portrait
+    ? portraitCenterY + portraitRowOffset
+    : stripY + stripHeight * FRAME_GEOMETRY.secondRowY;
+
   let textX = paddingX;
   let textWidth = width - paddingX * 2;
 
   if (logoPresent) {
-    const logoHeight = stripHeight * FRAME_GEOMETRY.logoHeight;
-    const logoCenterY = stripY + stripHeight * FRAME_GEOMETRY.logoCenterY;
+    // 竖图 logo 中心 = 贴底后的块中心;横图沿用条内比例中心。
+    const logoCenterY = portrait
+      ? portraitCenterY
+      : stripY + stripHeight * FRAME_GEOMETRY.logoCenterY;
     const logoWidth = logo?.bitmap
       ? drawLogoBitmap(
           context,
@@ -207,13 +244,23 @@ export const drawFrameComposition: DrawFrameComposition = (
           paddingX,
           logoCenterY,
           logoHeight,
-          width * FRAME_GEOMETRY.logoWidth
+          width * FRAME_GEOMETRY.logoWidth * logoScale
         )
       : drawLogoMark(context, mark, paddingX, logoCenterY, logoHeight);
     if (firstRow || secondRow) {
       const dividerGap = paddingX * FRAME_GEOMETRY.dividerGap;
       const dividerX = paddingX + logoWidth + dividerGap;
-      drawDivider(context, dividerX, stripY, stripHeight, width);
+      // 分隔线夹住实际绘制的那几行:只有第二行时,不能被未绘制的空行拉高。
+      const topRowY = firstRow ? firstRowBaselineY : secondRowBaselineY;
+      const lastRowY = secondRow ? secondRowBaselineY : firstRowBaselineY;
+      const overhang = metadataSize * FRAME_GEOMETRY.portraitDividerOverhang;
+      drawDivider(
+        context,
+        dividerX,
+        portrait ? topRowY - overhang : stripY + stripHeight * FRAME_GEOMETRY.dividerTop,
+        portrait ? lastRowY + overhang : stripY + stripHeight * FRAME_GEOMETRY.dividerBottom,
+        width
+      );
       textX = dividerX + dividerGap;
       textWidth = width - textX - paddingX;
     }
@@ -221,23 +268,14 @@ export const drawFrameComposition: DrawFrameComposition = (
 
   context.textAlign = "left";
   context.textBaseline = "middle";
-  const metadataSize = width * FRAME_GEOMETRY.metadataFont;
   if (firstRow) {
     context.font = frameFont(metadataSize, 400, PRIMARY_FONT_STACK);
     context.fillStyle = FRAME_PALETTE.text;
-    context.fillText(
-      fitText(context, firstRow, textWidth),
-      textX,
-      stripY + stripHeight * (secondRow ? FRAME_GEOMETRY.firstRowY : FRAME_GEOMETRY.singleRowY)
-    );
+    context.fillText(fitText(context, firstRow, textWidth), textX, firstRowBaselineY);
   }
   if (secondRow) {
     context.font = frameFont(metadataSize, 300, MONO_FONT_STACK);
     context.fillStyle = FRAME_PALETTE.muted;
-    context.fillText(
-      fitText(context, secondRow, textWidth),
-      textX,
-      stripY + stripHeight * FRAME_GEOMETRY.secondRowY
-    );
+    context.fillText(fitText(context, secondRow, textWidth), textX, secondRowBaselineY);
   }
 };

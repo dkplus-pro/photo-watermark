@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, vi } from "vitest";
 
 import { buildJpegHead } from "../../fixtures/build-image-containers";
+import { DEFAULT_LOGO_SIZE } from "../../../src/utils/frame/types";
 import type {
   FrameRenderRequest,
   FrameRenderSettings,
@@ -203,7 +204,8 @@ export const settings: FrameRenderSettings = {
   tier: "medium",
   styleId: "plain-frame",
   logoMark: "PH",
-  logoBlob: null
+  logoBlob: null,
+  logoSize: DEFAULT_LOGO_SIZE
 };
 
 export const DECODE_ERROR_MESSAGE = "无法解码该图片: 浏览器不支持此编码(HEIC/RAW)或文件已损坏";

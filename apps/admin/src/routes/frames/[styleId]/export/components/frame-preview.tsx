@@ -33,6 +33,8 @@ export interface FramePreviewProps {
   source: File | null;
   logoMark: string;
   logoBlob: Blob | null;
+  /** logo大小滑杆档位 */
+  logoSize: number;
   fields: FrameFields;
   /** 页面正在导出时禁止重绘 */
   disabled: boolean;
@@ -60,6 +62,7 @@ export function FramePreview({
   source,
   logoMark,
   logoBlob,
+  logoSize,
   fields,
   disabled
 }: FramePreviewProps) {
@@ -74,7 +77,7 @@ export function FramePreview({
     const token = sequenceRef.current + 1;
     sequenceRef.current = token;
     setState((prev) => ({ ...prev, rendering: true, error: null }));
-    renderPreview({ source, styleId, logoMark, logoBlob, fields })
+    renderPreview({ source, styleId, logoMark, logoBlob, logoSize, fields })
       .then((blob) => {
         // 迟到的旧结果:它对应的参数已经不是屏幕上这套,写回去就是画面与选择器错位。
         if (sequenceRef.current !== token) return;
@@ -109,7 +112,17 @@ export function FramePreview({
     return () => {
       cancelScheduledDraw();
     };
-  }, [source, styleId, logoMark, logoBlob, fieldsKey, disabled, scheduleDraw, cancelScheduledDraw]);
+  }, [
+    source,
+    styleId,
+    logoMark,
+    logoBlob,
+    logoSize,
+    fieldsKey,
+    disabled,
+    scheduleDraw,
+    cancelScheduledDraw
+  ]);
 
   const hasSource = Boolean(source);
 

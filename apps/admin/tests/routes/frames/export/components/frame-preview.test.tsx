@@ -52,6 +52,7 @@ function makeProps(overrides: Partial<FramePreviewProps> = {}): FramePreviewProp
     source,
     logoMark: "ACME",
     logoBlob,
+    logoSize: 10,
     fields: FIELDS,
     disabled: false,
     ...overrides
@@ -129,6 +130,7 @@ describe("空态与出图", () => {
       styleId: "classic-dark",
       logoMark: "ACME",
       logoBlob,
+      logoSize: 10,
       fields: FIELDS
     });
   });

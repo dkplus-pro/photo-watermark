@@ -1,6 +1,7 @@
 import { buildExifApp1, spliceExifIntoJpeg } from "./exif";
 import { loadFrameFonts } from "./fonts";
 import { getFrameStyle } from "./style-registry";
+import { LOGO_SIZE_MAX } from "./types";
 import type {
   DecodeImageScaled,
   DrawFrameComposition,
@@ -216,9 +217,16 @@ const decodeLogoBitmap = async (logoBlob: Blob | null): Promise<ImageBitmap | nu
   }
 };
 
-/** logo 绘制输入:有位图用位图,否则只给 mark——绘制端据此走文字块分支。 */
-const logoInputOf = (mark: string, bitmap: ImageBitmap | null): LogoRenderInput =>
-  bitmap ? { bitmap, mark } : { mark };
+/** logo 绘制输入:有位图用位图,否则只给 mark——绘制端据此走文字块分支;scale 由滑杆档位换算。 */
+const logoInputOf = (
+  mark: string,
+  bitmap: ImageBitmap | null,
+  logoSize: number
+): LogoRenderInput => ({
+  mark,
+  bitmap: bitmap ?? undefined,
+  scale: logoSize / LOGO_SIZE_MAX
+});
 
 /**
  * 零拷贝注入 EXIF 并组装结果(D8)。`exifInjected` 如实反映「是否真的注进去了」:head 为 null、
@@ -271,7 +279,7 @@ export const renderFrame: RenderFrameCore = async (request, surface) => {
     const style = getFrameStyle(request.styleId);
     if (!style) throw new Error(`相框样式「${request.styleId}」未在注册表登记, 请检查注册清单。`);
     logoBitmap = await decodeLogoBitmap(request.logoBlob);
-    const logo = logoInputOf(request.logoMark, logoBitmap);
+    const logo = logoInputOf(request.logoMark, logoBitmap, request.logoSize);
     style.draw(context, width, height, bitmap, request.fields, logo);
     const jpeg = await encodeJpeg(canvas, request.jpegQuality);
     return await buildResult(jpeg, request, width, height);

@@ -40,7 +40,8 @@ const PRESETS: LogoCatalogEntry[] = [
 
 const handlers = {
   onChange: vi.fn(),
-  onCustomFile: vi.fn()
+  onCustomFile: vi.fn(),
+  onLogoSizeChange: vi.fn()
 };
 
 function renderPicker(overrides: Partial<LogoPickerProps> = {}) {
@@ -49,9 +50,11 @@ function renderPicker(overrides: Partial<LogoPickerProps> = {}) {
     loading: false,
     value: NO_LOGO_ID,
     customFile: null,
+    logoSize: 10,
     disabled: false,
     onChange: handlers.onChange,
     onCustomFile: handlers.onCustomFile,
+    onLogoSizeChange: handlers.onLogoSizeChange,
     ...overrides
   };
   return render(<LogoPicker {...props} />);
@@ -262,9 +265,11 @@ describe("自定义 logo 一条闭环", () => {
         loading={false}
         value={CUSTOM_LOGO_ID}
         customFile={file}
+        logoSize={10}
         disabled={false}
         onChange={handlers.onChange}
         onCustomFile={handlers.onCustomFile}
+        onLogoSizeChange={handlers.onLogoSizeChange}
       />
     );
     expect(screen.getByText("brand.png")).toBeInTheDocument();
@@ -320,9 +325,11 @@ describe("自定义 logo 一条闭环", () => {
         loading={false}
         value={CUSTOM_LOGO_ID}
         customFile={makeLogoFile("b.png")}
+        logoSize={10}
         disabled={false}
         onChange={handlers.onChange}
         onCustomFile={handlers.onCustomFile}
+        onLogoSizeChange={handlers.onLogoSizeChange}
       />
     );
     expect(created).toEqual(["blob:logo-1", "blob:logo-2"]);
@@ -365,5 +372,36 @@ describe("自定义 logo 一条闭环", () => {
     await waitFor(() => expect(handlers.onCustomFile).toHaveBeenCalledTimes(1));
 
     expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("logo大小滑杆", () => {
+  it("给出「logo大小」标签与 5–10 的滑杆,右侧回显当前档位", () => {
+    const { container } = renderPicker({ logoSize: 7 });
+
+    expect(screen.getByText("logo大小")).toBeInTheDocument();
+    expect(container.querySelector(".arco-slider")).not.toBeNull();
+    expect(screen.getByText("7")).toBeInTheDocument();
+  });
+
+  it("受控件:value 完全由页面喂,档位不变时不重复回调", () => {
+    const { rerender, container } = renderPicker({ logoSize: 7 });
+    const first = container.querySelector(".arco-slider");
+
+    rerender(
+      <LogoPicker
+        logos={PRESETS}
+        loading={false}
+        value={NO_LOGO_ID}
+        customFile={null}
+        logoSize={7}
+        disabled={false}
+        onChange={handlers.onChange}
+        onCustomFile={handlers.onCustomFile}
+        onLogoSizeChange={handlers.onLogoSizeChange}
+      />
+    );
+    expect(handlers.onLogoSizeChange).not.toHaveBeenCalled();
+    expect(container.querySelector(".arco-slider")).toBe(first);
   });
 });
