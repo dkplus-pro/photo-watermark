@@ -6,6 +6,60 @@
       "name": "dkplus",
       "source": "assets/logos/dkplus.png",
       "mark": "DKPLUS"
+    },
+    {
+      "id": "canon",
+      "name": "canon",
+      "source": "assets/logos/canon.png",
+      "mark": "CANON"
+    },
+    {
+      "id": "omsystem",
+      "name": "omsystem",
+      "source": "assets/logos/omsystem.png",
+      "mark": "OMSYSTEM"
+    },
+    {
+      "id": "dji",
+      "name": "dji",
+      "source": "assets/logos/dji.png",
+      "mark": "DJI"
+    },
+    {
+      "id": "fujifilm",
+      "name": "fujifilm",
+      "source": "assets/logos/fujifilm.png",
+      "mark": "FUJIIFILM"
+    },
+    {
+      "id": "h",
+      "name": "h",
+      "source": "assets/logos/h.png",
+      "mark": "H"
+    },
+    {
+      "id": "lumix",
+      "name": "lumix",
+      "source": "assets/logos/lumix.png",
+      "mark": "LUMIX"
+    },
+    {
+      "id": "nikon",
+      "name": "nikon",
+      "source": "assets/logos/nikon.png",
+      "mark": "NIKON"
+    },
+    {
+      "id": "olympus",
+      "name": "olympus",
+      "source": "assets/logos/olympus.png",
+      "mark": "OLMPUS"
+    },
+    {
+      "id": "sony",
+      "name": "sony",
+      "source": "assets/logos/sony.png",
+      "mark": "SONY"
     }
   ]
 }
