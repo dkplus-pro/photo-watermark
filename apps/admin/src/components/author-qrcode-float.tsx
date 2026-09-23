@@ -13,7 +13,7 @@ export default function AuthorQrcodeFloat() {
       content={
         <img
           className="author-qrcode-img"
-          src={assetUrl("assets/author/QRCode.JPG")}
+          src={assetUrl("assets/author/qrcode.jpg")}
           alt="作者二维码"
         />
       }
