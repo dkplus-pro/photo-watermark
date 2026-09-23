@@ -26,7 +26,7 @@ const scope = globalThis as unknown as WorkerScopeLike;
 /** Worker 侧渲染面:画布用 OffscreenCanvas,字体注册在 Worker 自己的 FontFaceSet 上。 */
 const workerSurface: RenderSurface = {
   createCanvas: (width, height) => new OffscreenCanvas(width, height),
-  // 不消费 fonts 入参:注册清单是模块级常量 FRAME_FONTS(见 fonts.ts),整套注册才有意义。
+  // 字体清单是模块级常量 FRAME_FONTS(见 fonts.ts),整套注册才有意义,所以这里不接受入参。
   loadFonts: () => loadFrameFonts(globalThis)
 };
 

@@ -21,7 +21,7 @@ export const buildJpegHead = (
   width: number,
   height: number,
   options: BuildJpegHeadOptions = {}
-): Uint8Array => {
+): Uint8Array<ArrayBuffer> => {
   // SOFn:标志(2) 段长(2) 精度(1) 高(2) 宽(2) 分量数(1) 首个分量 id(1)
   const sof = new Uint8Array([
     0xff,

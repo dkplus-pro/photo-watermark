@@ -282,14 +282,20 @@ describe("drawFrameComposition logo 分支", () => {
   });
 
   it("超宽位图受画布宽 0.2 的外接框约束并保持宽高比", () => {
-    const { calls } = draw(1000, 800, FULL_FIELDS, { bitmap: makeBitmap(2000, 100) });
+    const { calls } = draw(1000, 800, FULL_FIELDS, {
+      mark: "ACME",
+      bitmap: makeBitmap(2000, 100)
+    });
     const [, , , logoWidth, logoHeight] = numbersAt(calls, "drawImage", 1);
     expect(logoWidth).toBeCloseTo(1000 * 0.2, 6);
     expect(logoHeight).toBeCloseTo((1000 * 0.2 * 100) / 2000, 6);
   });
 
   it("有 logo 且有文字时:分隔线落在 logo 右外侧,文字起点再右移一个间隔", () => {
-    const { calls } = draw(1000, 800, FULL_FIELDS, { bitmap: makeBitmap(200, 100) });
+    const { calls } = draw(1000, 800, FULL_FIELDS, {
+      mark: "ACME",
+      bitmap: makeBitmap(200, 100)
+    });
     const paddingX = 1000 * 0.036;
     const gap = paddingX * 0.54;
     const logoHeight = 800 * 0.2 * 0.45;

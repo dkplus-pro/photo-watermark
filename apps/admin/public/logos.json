@@ -2,22 +2,10 @@
   "version": 1,
   "logos": [
     {
-      "id": "juzi",
-      "name": "芥子科技",
-      "source": "assets/logos/juzi.svg",
-      "mark": "JUZI"
-    },
-    {
-      "id": "studio",
-      "name": "光影工作室",
-      "source": "assets/logos/studio.svg",
-      "mark": "STUDIO"
-    },
-    {
-      "id": "minimal",
-      "name": "极简印记",
-      "source": "assets/logos/minimal.svg",
-      "mark": "MINIMAL"
+      "id": "dkplus",
+      "name": "dkplus",
+      "source": "assets/logos/dkplus.png",
+      "mark": "DKPLUS"
     }
   ]
 }

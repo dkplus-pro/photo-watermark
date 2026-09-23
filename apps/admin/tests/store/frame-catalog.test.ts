@@ -25,7 +25,7 @@ const FRAMES: FrameCatalog = {
     {
       id: "plain-frame",
       name: "基础黑框",
-      thumbnail: "assets/thumbs/plain-frame.svg",
+      thumbnail: "assets/thumbs/plain-frame.jpg",
       sortOrder: 20
     },
     {

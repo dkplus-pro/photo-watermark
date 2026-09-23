@@ -10,7 +10,7 @@
 public/
   frames.json                 相框清单
   logos.json                  logo 预设清单
-  assets/brand/logo.svg       侧栏/顶栏应用 logo
+  assets/brand/logo.png       侧栏/顶栏应用 logo
   assets/logos/*.svg          logo 预设图(清单 source 指向此处)
   assets/thumbs/*.svg         相框缩略图(清单 thumbnail 指向此处)
   fonts/*.woff2               相框绘制用 webfont(见第 4 节)
@@ -18,7 +18,7 @@ public/
 
 ## 1. 怎么换应用 logo
 
-替换 `assets/brand/logo.svg` 的内容即可,文件名保持不变(壳层按 `assetUrl("assets/brand/logo.svg")` 引用)。
+替换 `assets/brand/logo.png` 的内容即可,文件名保持不变(壳层按 `assetUrl("assets/brand/logo.png")` 引用)。
 建议 48×48 的方形 viewBox、单色深灰 `#09090b`,透明底。
 
 ## 2. 怎么换 / 加 logo 预设
@@ -53,7 +53,7 @@ JSON 只做清单,具体画法走代码分支(决策 D2),所以:
 {
   "id": "plain-frame",
   "name": "基础黑框",
-  "thumbnail": "assets/thumbs/plain-frame.svg",
+  "thumbnail": "assets/thumbs/plain-frame.jpg",
   "sortOrder": 10
 }
 ```

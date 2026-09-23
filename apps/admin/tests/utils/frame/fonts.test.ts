@@ -15,9 +15,9 @@ import {
  * (jsdom 无 FontFace 实现,真机字体加载也不该由单测负责)。
  */
 
-// 资源路径必须全部经 assetUrl 拼 basePath,这里把前缀固定成可断言的字面量。
+// 资源路径必须全部经 assetUrl 拼 basePath + `/public/` 前缀,这里把两者固定成可断言的字面量。
 vi.mock("../../../src/utils/asset-url", () => ({
-  assetUrl: (path: string) => `/photo-watermark/${String(path).replace(/^\/+/gu, "")}`
+  assetUrl: (path: string) => `/photo-watermark/public/${String(path).replace(/^\/+/gu, "")}`
 }));
 
 interface FakeFontFaceRecord {
@@ -100,7 +100,7 @@ describe("字体清单(D9)", () => {
 });
 
 describe("loadFrameFonts 成功路径", () => {
-  it("Worker 全局 scope:注册三个字体并返回 true,URL 带 basePath 前缀", async () => {
+  it("Worker 全局 scope:注册三个字体并返回 true,URL 带 basePath + public 前缀", async () => {
     const { scope, constructed, added } = createFakeScope();
     await expect(loadFrameFonts(scope)).resolves.toBe(true);
     expect(constructed).toHaveLength(3);
@@ -111,9 +111,9 @@ describe("loadFrameFonts 成功路径", () => {
       "Fira Sans:400"
     ]);
     expect(constructed.map((face) => face.source)).toEqual([
-      'url("/photo-watermark/fonts/jost-latin-400-normal.woff2")',
-      'url("/photo-watermark/fonts/jost-latin-700-normal.woff2")',
-      'url("/photo-watermark/fonts/fira-sans-latin-400-normal.woff2")'
+      'url("/photo-watermark/public/fonts/jost-latin-400-normal.woff2")',
+      'url("/photo-watermark/public/fonts/jost-latin-700-normal.woff2")',
+      'url("/photo-watermark/public/fonts/fira-sans-latin-400-normal.woff2")'
     ]);
   });
 

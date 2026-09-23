@@ -1,0 +1,233 @@
+/* 导出表单的四个组件样式(阶段 11:image-picker / size-tier-picker / logo-picker / frame-preview)。
+   纪律同 routes/frames/index.css:颜色一律取 Arco CSS 变量(主题层 @arco-themes/react-juzi001),
+   不写死色值、不做暗色分支;纯视觉的端差异走 @media,交互差异才由组件里的断点 hook 决定。 */
+
+/* ---------------------------------------------------------------- 照片选择器 */
+
+/* 卡片自身的高度差交给内容,列表用 auto-fill 网格:列数随容器宽度自然增减,
+   窄容器(移动端卡片宽度约 100vw)自动降到 2-3 列,不必为列数再引一处 JS 判定。 */
+.image-picker-grid {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 12px;
+  list-style: none;
+}
+
+.image-picker-item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* 缩略位与删除按钮的定位父级;固定宽高比避免图片解码完成时列表跳动。 */
+.image-picker-item-media {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--color-fill-1);
+  border: 1px solid var(--color-border-2);
+  border-radius: var(--border-radius-small);
+  aspect-ratio: 1 / 1;
+}
+
+.image-picker-item-thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* object URL 生成失败(隐私模式、配额耗尽)时的可读占位,而不是一块空洞。 */
+.image-picker-item-placeholder {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-3);
+  font-size: 12px;
+}
+
+/* 删除按钮浮在缩略图右上角:桌面 hover 才现身是常见写法,但移动端没有 hover,
+   所以默认常驻可见,hover 只用于加深底色(AGENTS.md 第 7 节禁止 hover 承载唯一入口)。 */
+.image-picker-item-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  opacity: 0.85;
+}
+
+/* 移动端触摸目标 ≥44px:arco 的 mini 圆钮只有 24px,点这里删一张图在触屏上是惩罚。
+   className 落在 arco 的 `<button>` 本身(arco 不额外包一层),所以只选它自己。 */
+.image-picker-item-remove--touch {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.image-picker-item-name {
+  max-width: 100%;
+  font-size: 12px;
+}
+
+.image-picker-item-size {
+  color: var(--color-text-3);
+  font-size: 12px;
+}
+
+/* arco 的拖拽区默认只包一层内联块,撑满整行才是「可以往里丢文件」的形状。 */
+.image-picker-upload .arco-upload-trigger {
+  width: 100%;
+}
+
+.image-picker-upload .arco-upload-trigger-drag {
+  padding: 16px 12px;
+  border-style: dashed;
+  border-radius: var(--border-radius-medium);
+}
+
+/* 移动端的主选图入口:整行按钮 + 44px 触摸目标。 */
+.image-picker-trigger {
+  width: 100%;
+  min-height: 44px;
+}
+
+.image-picker-hint {
+  margin-bottom: 12px;
+}
+
+.image-picker-empty {
+  margin: 12px 0 0;
+  color: var(--color-text-3);
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------- 输出档位 */
+
+/* 档位的名字与兆数提示是同一道题的题干与条件,分两行放;
+   Radio.Group type="button" 的按钮宽度由内容撑开,窄容器下 arco 自己会换行。 */
+.size-tier-option {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  line-height: 1.4;
+}
+
+.size-tier-option-label {
+  font-weight: 600;
+}
+
+.size-tier-option-hint {
+  color: var(--color-text-3);
+  font-size: 12px;
+}
+
+.size-tier-picker-note {
+  display: block;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+/* ---------------------------------------------------------------- logo 选择 */
+
+.logo-picker-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 竖排radio 之间留出触摸余量(arco 的 radio 行高不足 20px,移动端点不准)。 */
+.logo-picker-option {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  margin-left: 0;
+}
+
+.logo-picker-option-name {
+  color: var(--color-text-1);
+}
+
+/* 预设 logo 是给相框底部**黑色信息条**做的浅色图,铺在浅色卡片上等于看不见,
+   所以预览必须垫深底——深底与浅色文字都取主题变量(与绘制端的黑底白字同一配色),不写死色值。 */
+.logo-picker-preview {
+  display: inline-flex;
+  width: 48px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--color-white);
+  font-size: 12px;
+  background: var(--color-black);
+  border-radius: var(--border-radius-small);
+  object-fit: contain;
+}
+
+.logo-picker-custom {
+  display: flex;
+  margin-top: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.logo-picker-custom-name {
+  max-width: 160px;
+  font-size: 12px;
+}
+
+.logo-picker-custom-hint {
+  width: 100%;
+  font-size: 12px;
+}
+
+/* ---------------------------------------------------------------- 效果预览 */
+
+/* 预览图按等比铺满卡片宽度:长边 1200 的产物在 320px 宽的手机上只是被 CSS 缩小显示,
+   排版判断看的是比例而不是像素数(D18)。 */
+.frame-preview-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--color-fill-1);
+  border-radius: var(--border-radius-small);
+}
+
+/* 出图前的占位高度与常见 3:4 竖构图接近,避免画面到位时整页跳动。 */
+.frame-preview-skeleton {
+  display: flex;
+  min-height: 200px;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-fill-1);
+  border-radius: var(--border-radius-small);
+}
+
+.frame-preview-error {
+  margin-top: 0;
+}
+
+.frame-preview-empty {
+  padding: 24px 0;
+}
+
+/* 窄屏:预览卡片顶部的说明文案(「恒按长边 1200px」)与标题各占一行,
+   否则 arco 的 Card header 一行里挤不下,文案会被截成半句。 */
+@media (width <= 768px) {
+  .frame-preview .arco-card-header {
+    display: block;
+  }
+
+  .frame-preview .arco-card-header-extra {
+    margin-top: 2px;
+    font-size: 12px;
+  }
+
+  .logo-picker-custom-name {
+    max-width: 100%;
+  }
+}

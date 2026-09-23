@@ -7,7 +7,7 @@ export const SYSTEM_NAME = "水印相框";
 export const APP_BASENAME = __APP_BASE_PATH__;
 
 // 公共页脚版权文案,年份写死而非运行时取值,保证渲染结果可测。
-export const COPYRIGHT_TEXT = "© 2026 水印相框";
+export const COPYRIGHT_TEXT = "© 2026 dkplus 水印相框";
 
 // 静态资源清单(阶段 6)与主题字体(阶段 9)共用的资源路径事实源。
 export const FRAMES_CATALOG_PATH = "frames.json";

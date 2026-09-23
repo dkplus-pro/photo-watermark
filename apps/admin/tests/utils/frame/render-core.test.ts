@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { FRAME_FONTS } from "../../../src/utils/frame/fonts";
 import {
   decodeImageScaled,
   mainThreadSurface,
@@ -116,8 +115,8 @@ const registerCanvas = (
 const createFakeSurface = (scaffold: CanvasScaffold): RenderSurface => ({
   createCanvas: (width, height) =>
     registerCanvas(scaffold, width, height) as unknown as OffscreenCanvas,
-  loadFonts: async (fonts) => {
-    scaffold.events.push(`fonts:${fonts.length}`);
+  loadFonts: async () => {
+    scaffold.events.push("fonts");
     return scaffold.fontsLoaded;
   }
 });
@@ -218,7 +217,6 @@ const createRequest = (overrides: Partial<FrameRenderRequest> = {}): FrameRender
   exifHead: null,
   logoMark: "PH",
   logoBlob: null,
-  fonts: FRAME_FONTS,
   ...overrides
 });
 
@@ -330,7 +328,7 @@ describe("renderFrame:Worker 与主线程共用的单张渲染", () => {
 
     const result = await renderFrame(createRequest(), createFakeSurface(scaffold));
 
-    expect(scaffold.events).toEqual([`fonts:${FRAME_FONTS.length}`]);
+    expect(scaffold.events).toEqual(["fonts"]);
     expect(drawSpy).toHaveBeenCalledTimes(1);
     const [context, width, height, bitmap, fields, logo] = drawSpy.mock.calls[0];
     expect(context).toBe(scaffold.created[0]?.getContext("2d"));
@@ -508,7 +506,7 @@ describe("mainThreadSurface:主线程降级面", () => {
   });
 
   it("loadFonts 在缺 FontFace/font set 的环境降级为布尔值而不抛错", async () => {
-    const loaded = await mainThreadSurface.loadFonts(FRAME_FONTS);
+    const loaded = await mainThreadSurface.loadFonts();
 
     expect(typeof loaded).toBe("boolean");
   });

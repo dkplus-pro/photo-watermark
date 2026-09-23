@@ -41,7 +41,7 @@ const VALID_FRAME_CATALOG = {
     {
       id: "plain-frame",
       name: "基础黑框",
-      thumbnail: "assets/thumbs/plain-frame.svg",
+      thumbnail: "assets/thumbs/plain-frame.jpg",
       sortOrder: 10
     }
   ]
@@ -257,7 +257,7 @@ describe("loadCatalogs", () => {
   });
 
   it("两份清单并发发出,不串行等待", async () => {
-    let releaseFirst = () => undefined;
+    let releaseFirst: () => void = () => undefined;
     const firstGate = new Promise<void>((resolve) => {
       releaseFirst = resolve;
     });
@@ -356,7 +356,7 @@ describe("仓库 public/ 清单与资源", () => {
   });
 
   it("FRAME_FONTS 声明的字体与壳层 logo 都已落地", async () => {
-    const referenced = [...FRAME_FONTS.map((font) => font.path), "assets/brand/logo.svg"];
+    const referenced = [...FRAME_FONTS.map((font) => font.path), "assets/brand/logo.png"];
     for (const path of referenced) {
       await expect(access(publicPath(path))).resolves.toBeUndefined();
     }

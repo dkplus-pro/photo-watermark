@@ -1,7 +1,7 @@
 // 结构性回归守卫(纯文件断言,无需 DOM,用 node 环境)。
 // 水印相框是纯静态站:本文件锁住「不回到 CMS」的几条硬约束。
 // @vitest-environment node
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 
 import { expect, test } from "vitest";
 
@@ -41,6 +41,24 @@ test("basePath feeds both assetPrefix and router basename from one source (D11)"
   expect(configSource).not.toMatch(/API_PROXY_TARGET/);
   // 导出与预览用 Blob URL,CSP 的 img-src 必须放行 blob:。
   expect(configSource).toMatch(/img-src 'self' data: blob:/);
+  // Modern.js 把路由清单写成内联脚本:script-src 不放行 inline,生产首屏直接白屏(已实测)。
+  expect(configSource).toMatch(/script-src 'self' 'unsafe-inline'/);
+});
+
+test("随包 public 资源既被声明也按 /public 前缀解析(D10 回归)", async () => {
+  // appTools 默认只拷 `<configDir>/public`,本 app 的清单在仓库根的 public/ —— 不声明就整目录丢失。
+  expect(configSource).toMatch(/publicDir: "public"/);
+  // 声明后产物落在 dist/public/,URL 也带这一段;assetUrl 是唯一出口,拼错即全站 404。
+  const assetUrlSource = await read("../src/utils/asset-url.ts");
+  expect(assetUrlSource).toMatch(/PUBLIC_URL_SEGMENT = "public"/);
+});
+
+test("导出页用方括号动态段,深链才能匹配", async () => {
+  const framesDir = await readdir(new URL("../src/routes/frames/", import.meta.url));
+  // Modern.js 3 只把 `[x]` 转成路由的 `:x`;`$x` 目录会被当成字面量段,
+  // `/frames/plain-frame/export` 直接落到 `*` 兜底页(只有 `$` 单独出现时才表示 splat)。
+  expect(framesDir).toContain("[styleId]");
+  expect(framesDir.filter((name) => name.startsWith("$"))).toEqual([]);
 });
 
 test("shell is anonymous: no auth, no query client, no server state", () => {

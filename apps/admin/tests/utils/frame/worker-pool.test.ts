@@ -51,8 +51,7 @@ const createRequest = (fileName: string): FrameRenderRequest => ({
   fields: {},
   exifHead: null,
   logoMark: "PH",
-  logoBlob: null,
-  fonts: []
+  logoBlob: null
 });
 
 // ---------------------------------------------------------------- Worker 替身

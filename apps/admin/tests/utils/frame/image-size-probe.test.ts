@@ -30,7 +30,7 @@ import {
 const decodeDouble = vi.hoisted(() => vi.fn());
 vi.mock("../../../src/utils/frame/render-core", () => ({ decodeImageScaled: decodeDouble }));
 
-const textBytes = (value: string): Uint8Array => new TextEncoder().encode(value);
+const textBytes = (value: string): Uint8Array<ArrayBuffer> => new TextEncoder().encode(value);
 
 beforeEach(() => {
   decodeDouble.mockReset();

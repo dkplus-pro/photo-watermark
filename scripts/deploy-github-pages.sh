@@ -43,6 +43,13 @@ if [[ ! -f "$ARTIFACT_DIR/index.html" ]]; then
   exit 1
 fi
 
+# 清单/字体/logo 随 `server.publicDir` 拷到 dist/public/。少了这一目录,站点能起来
+# 但每个页面都会报「相框清单内容非法」,所以它在发布前必须是硬检查。
+if [[ ! -f "$ARTIFACT_DIR/public/frames.json" ]]; then
+  ci_error "GitHub Pages artifact '$ARTIFACT_DIR/public/frames.json' is missing: check server.publicDir in $APP_DIR/modern.config.ts."
+  exit 1
+fi
+
 # SPA 深链兜底(D11):Pages 无 rewrite 能力,子路由直接刷新会 404。
 # 复制一份 404.html,浏览器拿到 404 状态码但资源前缀是绝对路径,SPA 仍能接管渲染。
 cp "$ARTIFACT_DIR/index.html" "$ARTIFACT_DIR/404.html"

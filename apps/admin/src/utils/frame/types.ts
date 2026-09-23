@@ -259,7 +259,6 @@ export interface FrameRenderRequest {
   readonly exifHead: Uint8Array | null;
   readonly logoMark: string;
   readonly logoBlob: Blob | null;
-  readonly fonts: readonly FontAsset[];
 }
 
 /** Worker → 主线程的产物;EXIF 已在 Worker 内注入。 */
@@ -304,7 +303,7 @@ export type RenderFrameCore = (
 /** 渲染面:Worker 用 OffscreenCanvas,主线程用普通 canvas 的 2d context。 */
 export interface RenderSurface {
   createCanvas(width: number, height: number): OffscreenCanvas | HTMLCanvasElement;
-  loadFonts(fonts: readonly FontAsset[]): Promise<boolean>;
+  loadFonts(): Promise<boolean>;
 }
 
 /** 解码期缩放(决策 D20):不支持 resizeWidth/Height 的环境退回全尺寸解码。 */

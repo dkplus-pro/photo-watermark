@@ -33,8 +33,13 @@ function normalizeBasePath(value?: string): string | undefined {
 
 // 生产构建注入 CSP meta。图片预览用 Blob URL、导出用 anchor 下载,故 img-src 需 blob:;
 // Worker 与静态资源全部同源,不放通配。dev 不注入(HMR 内联脚本会被破坏)。
+//
+// script-src 必须放行 'unsafe-inline':Modern.js 把路由清单以**内联脚本**形式写进 index.html
+// (`window._MODERNJS_ROUTE_MANIFEST = …`),它只允许同源外链脚本时该脚本被拦,整站白屏。
+// Pages 不会给静态资源发响应头,meta 是唯一 CSP 通道;而清单内容随构建变化(chunk hash),
+// 也没法预先写 sha256。所以这里放开内联、把口径收在「只允许同源脚本/样式/字体/请求」上。
 const productionCSP = [
-  "script-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
@@ -65,6 +70,8 @@ export default defineConfig({
       __APP_BASE_PATH__: JSON.stringify(basePath)
     }
   },
-  ...(devServerPort ? { server: { port: devServerPort } } : {}),
+  ...(devServerPort
+    ? { server: { port: devServerPort, publicDir: "public" } }
+    : { server: { publicDir: "public" } }),
   plugins: [appTools()]
 });

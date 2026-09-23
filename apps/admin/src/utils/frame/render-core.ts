@@ -254,7 +254,7 @@ const buildResult = async (
 export const renderFrame: RenderFrameCore = async (request, surface) => {
   // 字体缺失(loadFrameFonts 返回 false)只影响观感——它会退回字体栈里下一级系统字体,
   // 所以连返回值都不看:绘制链路绝不能因为字体拉挂而中断导出(D9)。
-  await surface.loadFonts(request.fonts);
+  await surface.loadFonts();
   const bitmap = await decodeImageScaled(request.blob, request.target);
   const { width, height } = bitmap;
   let logoBitmap: ImageBitmap | null = null;
@@ -294,7 +294,6 @@ export const mainThreadSurface: RenderSurface = {
     canvas.height = height;
     return canvas;
   },
-  // 不消费 fonts 入参:loadFrameFonts 的清单是模块级常量 FRAME_FONTS,只支持整套注册;
-  // request.fonts 留在契约里是为了让 Worker 消息自描述。
+  // 字体清单是模块级常量 FRAME_FONTS(见 fonts.ts),整套注册才有意义,所以这里不接受入参。
   loadFonts: () => loadFrameFonts(document)
 };

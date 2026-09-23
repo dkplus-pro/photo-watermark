@@ -103,7 +103,9 @@ export interface BuildJpegOptions {
 }
 
 /** 拼出「按段合法」的 JPEG 字节。SOS 之后是伪扫描数据(含假 0xFF 标志)。 */
-export const buildJpegBytes = (options: BuildJpegOptions = {}): Uint8Array => {
+// 返回值要能直接进 `new Blob([...])`:标注成裸 `Uint8Array` 会被放宽成
+// `Uint8Array<ArrayBufferLike>`,而 TS 5.9 的 `BlobPart` 只接受 `ArrayBuffer`  backed 视图。
+export const buildJpegBytes = (options: BuildJpegOptions = {}): Uint8Array<ArrayBuffer> => {
   const { app1Segment, withComment = false } = options;
   const comment = new Uint8Array([0xff, 0xfe, 0x00, 0x07, 0x41, 0x42, 0xff, 0xe1, 0x43]); // 注释内容里故意放一串 0xFFE1
   const parts: Uint8Array[] = [new Uint8Array([0xff, 0xd8]), APP0_JFIF];

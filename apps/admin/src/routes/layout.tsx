@@ -137,7 +137,7 @@ function AppShell() {
               ) : (
                 <>
                   {/* public 资源必须经 assetUrl 拼 basePath,裸 `/assets/...` 在子路径部署下 404。 */}
-                  <img className="app-logo-img" src={assetUrl("assets/brand/logo.svg")} alt="" />
+                  <img className="app-logo-img" src={assetUrl("assets/brand/logo.png")} alt="" />
                   {SYSTEM_NAME}
                 </>
               )}

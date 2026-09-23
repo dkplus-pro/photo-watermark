@@ -2,7 +2,6 @@ import { outputNameOf } from "../file-name";
 import { supportsWorkerRendering } from "./capability";
 import { CancelledExportError } from "./export-cancel";
 import { buildRenderUnits, concurrencyOf } from "./export-jobs";
-import { FRAME_FONTS } from "./fonts";
 import { mainThreadSurface, renderFrame } from "./render-core";
 import { createFrameWorkerPool } from "./worker-pool";
 import { PACK_FAILURE_PREFIX } from "./zip-writer";
@@ -87,8 +86,7 @@ const requestOf = (unit: RenderUnit, settings: FrameRenderSettings): FrameRender
   fields: unit.job.fields,
   exifHead: unit.job.exifHead,
   logoMark: settings.logoMark,
-  logoBlob: settings.logoBlob,
-  fonts: FRAME_FONTS
+  logoBlob: settings.logoBlob
 });
 
 /** 怎么拿到一张的产物:两条渲染路径唯一被允许不同的地方(决策 D6)。 */

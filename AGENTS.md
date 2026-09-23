@@ -36,12 +36,12 @@ pnpm + Turborepo monorepo,7 个应用(`apps/mobile` 为 Flutter 工程,不在 pn
 ### admin =「水印相框」纯静态工具(详见 [apps/admin/AGENTS.md](apps/admin/AGENTS.md),方案见 [docs/watermark-frame-plan.md](docs/watermark-frame-plan.md))
 
 4. UI 优先用 `@arco-design/web-react` 基础组件,不满足才自定义;主题走 `@arco-themes/react-juzi001/theme.css` 覆盖在 `arco.css` 之后引入,不做暗色模式;
-   4a. **本 app 无服务端、无登录、无鉴权**:禁止出现 API 客户端、token 处理、`AuthGate`、TanStack Query / ahooks `useRequest`;唯一允许的 `fetch` 是同源取 `public/` 下的清单 JSON;
-5. 页面只剩两个:`/frames`(相框列表,网格一行 桌面 4 / 平板 3 / 手机 2,item 是缩略图卡片)与 `/frames/:styleId/export`(导出表单)。左侧菜单只有「水印相框 → 相框列表」一项;菜单项必须带图标;新页面仍套 `PageContainer`(子路由用它的 `breadcrumb` prop 显式给尾项,因为 `matchMenuTrail` 走的是菜单声明);
+   4a. **本 app 无服务端、无登录、无鉴权**:禁止出现 API 客户端、token 处理、`AuthGate`、TanStack Query / ahooks `useRequest`;唯一允许的 `fetch` 是同源取 `public/` 下的清单 JSON 与预设 logo 图;
+5. 页面只剩两个:`/frames`(相框列表,网格一行 桌面 4 / 平板 3 / 手机 2,item 是缩略图卡片)与 `/frames/:styleId/export`(导出表单 + 实时预览)。左侧菜单只有「水印相框 → 相框列表」一项;菜单项必须带图标;新页面仍套 `PageContainer`(子路由用它的 `breadcrumb` prop 显式给尾项,因为 `matchMenuTrail` 走的是菜单声明);
    5a. **无列表分页/查询表单/增删改**这类后台范式,规则 5c/5d 的 arco-pro search-table 与分页要求不再适用;表单页按字段复杂度直接用 `Form` + `Card`,不需要吸底栏;
 6. 目录分区:`src/utils`(`utils/frame/` 是渲染引擎,本 app 唯一的「业务内核」目录例外,允许放纯函数与 Worker)/ `components` / `hooks` / `routes`(页面)/ `store`(全局状态)/ `config` / `constants` / `types.ts`(运行时数据形状);
 7. 复用规则:2 个及以上页面用 → 提到 `src/components`、`src/hooks`;单页面用 → 留在页面目录内;客户端全局状态 → zustand(`src/store/`,每个领域一个 `useXxxStore`),持久化只允许 `partialize` 白名单写用户偏好,禁止持久化 `File` 与进行中的任务状态;
-8. **渲染纪律(硬性)**:批量渲染必须走 Web Worker 池(`src/utils/frame/worker-pool.ts`)且并发数由 `memoryAwareConcurrency()` 给出(禁止按 `hardwareConcurrency` 开并发)、canvas 面积上限靠探测;相框样式的绘制走代码注册表(`style-registry.ts`),`public/frames.json` 只做清单;绘制几何一律纯比例,禁止 `clamp` 绝对像素;EXIF 继承必须零拷贝拼接(`piexifjs` 只碰 ≤256KB 头部,禁止把整幅图 latin1 字符串化);
+8. **渲染纪律(硬性)**:批量渲染必须走 Web Worker 池(`src/utils/frame/worker-pool.ts`)且并发数由 `memoryAwareConcurrency()` 给出(禁止按 `hardwareConcurrency` 开并发)、canvas 面积上限靠探测;实时预览是唯一允许的主线程渲染(`utils/frame/preview-render.ts`,与导出共用内核,恒按长边 1200px);源图尺寸一律头部探测(`utils/frame/image-size-probe.ts`),禁止为拿宽高先解码全尺寸位图;相框样式的绘制走代码注册表(`style-registry.ts`),`public/frames.json` 只做清单;绘制几何一律纯比例,禁止 `clamp` 绝对像素;EXIF 继承必须零拷贝拼接(`piexifjs` 只碰 ≤256KB 头部,禁止把整幅图 latin1 字符串化);
 9. 工具函数:通用 React 逻辑优先 ahooks(断点判定统一 `src/hooks/use-responsive.ts`),纯数据操作优先 lodash(按方法引入 `lodash/xxx`),两者覆盖不了才自写;静态资源引用一律经 `src/utils/asset-url.ts` 的 `assetUrl()`(Pages 子路径部署下硬编码 `/assets/...` 必 404);
 10. 单文件超约 300 行必须拆分,页面主入口只做数据编排;构建产物只发布 admin 一个 app 到 GitHub Pages,`basePath` 必须同时喂 `output.assetPrefix`、路由 `basename` 与 `assetUrl` 三处(单一事实源见 apps/admin/AGENTS.md 第 10 节)。
 

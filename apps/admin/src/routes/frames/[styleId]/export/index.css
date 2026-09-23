@@ -1,0 +1,115 @@
+/* 导出页(阶段 13):颜色一律取 Arco CSS 变量(主题层 @arco-themes/react-juzi001),
+   不写死色值、不做暗色分支。列数差异由 hooks/use-responsive 给 span 决定,
+   这里只做排布与窄屏适配,不再抄一份断点。 */
+
+.export-style-name {
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* 左表单右预览两栏之间靠 Row 的 gutter 撑开,列内部自己纵向排;移动端两列各占整行。 */
+.export-layout {
+  align-items: flex-start;
+}
+
+.export-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.export-layout--mobile .export-form {
+  gap: 12px;
+}
+
+.export-hint {
+  margin-bottom: 0;
+}
+
+/* 错误态不铺满整行:一句「样式不存在」拉通 1600px 读起来很怪。 */
+.export-gate {
+  max-width: 640px;
+}
+
+/* --------------------------------------------------------------- 进度弹框 */
+
+.export-progress-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.export-progress-counter {
+  display: block;
+}
+
+.export-progress-result-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 失败明细:整批最多几十条,给它一个独立滚动区,免得弹框被撑出屏幕(AGENTS 第 7 节)。 */
+.export-progress-failures {
+  margin-top: 4px;
+}
+
+.export-progress-failures-title {
+  margin-bottom: 4px;
+  color: var(--color-text-2);
+  font-size: 13px;
+}
+
+.export-progress-failure-list {
+  max-height: 180px;
+  margin: 0;
+  padding: 0 12px;
+  overflow-y: auto;
+  color: var(--color-text-1);
+  font-size: 13px;
+  list-style: none;
+  background: var(--color-fill-1);
+  border: 1px solid var(--color-border-2);
+  border-radius: var(--border-radius-small);
+}
+
+.export-progress-failure-item {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--color-border-1);
+}
+
+.export-progress-failure-item:last-child {
+  border-bottom: none;
+}
+
+.export-progress-failure-name {
+  flex: 0 0 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.export-progress-failure-message {
+  flex: 1 1 auto;
+  color: var(--color-text-3);
+  word-break: break-all;
+}
+
+/* 窄屏:弹框全宽 + 页脚按钮可换行且撑到 44px 触摸目标下限(AGENTS 第 7 节)。 */
+.export-progress-modal-wrap--mobile .arco-modal {
+  max-width: calc(100vw - 24px);
+}
+
+.export-progress-modal-wrap--mobile .arco-modal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.export-progress-modal-wrap--mobile .arco-modal-footer .arco-btn {
+  min-height: 44px;
+  padding: 0 20px;
+  font-size: 15px;
+}
