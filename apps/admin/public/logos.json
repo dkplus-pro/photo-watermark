@@ -60,6 +60,54 @@
       "name": "sony",
       "source": "assets/logos/sony.png",
       "mark": "SONY"
+    },
+    {
+      "id": "em1mk3",
+      "name": "em1mk3",
+      "source": "assets/logos/em1mk3.png",
+      "mark": "EM1MK3"
+    },
+    {
+      "id": "om1",
+      "name": "om1mk2",
+      "source": "assets/logos/om1mk2.png",
+      "mark": "OM1MK2"
+    },
+    {
+      "id": "om5mk2",
+      "name": "om5mk2",
+      "source": "assets/logos/om5mk2.png",
+      "mark": "OM5MK2"
+    },
+    {
+      "id": "om5mk2black",
+      "name": "om5mk2black",
+      "source": "assets/logos/om5mk2black.png",
+      "mark": "OM5MK2BLACK"
+    },
+    {
+      "id": "om3",
+      "name": "om3",
+      "source": "assets/logos/om3.png",
+      "mark": "OM3"
+    },
+    {
+      "id": "ep7",
+      "name": "ep7",
+      "source": "assets/logos/ep7.png",
+      "mark": "EP7"
+    },
+    {
+      "id": "pen-silver",
+      "name": "pen-silver",
+      "source": "assets/logos/pen-silver.png",
+      "mark": "PEN-SILVER"
+    },
+    {
+      "id": "g9m2",
+      "name": "g9m2",
+      "source": "assets/logos/g9m2.png",
+      "mark": "G9M2"
     }
   ]
 }
