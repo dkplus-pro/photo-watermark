@@ -108,6 +108,24 @@
       "name": "g9m2",
       "source": "assets/logos/g9m2.png",
       "mark": "G9M2"
+    },
+    {
+      "id": "iphone16pro",
+      "name": "iphone16pro",
+      "source": "assets/logos/iphone16pro.png",
+      "mark": "IPHONE16PRO"
+    },
+    {
+      "id": "s9",
+      "name": "s9",
+      "source": "assets/logos/s9.png",
+      "mark": "S9"
+    },
+    {
+      "id": "z62",
+      "name": "z62",
+      "source": "assets/logos/z62.png",
+      "mark": "Z62"
     }
   ]
 }
