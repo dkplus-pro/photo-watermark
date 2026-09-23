@@ -8,6 +8,7 @@ import { Outlet, useLocation, useNavigate } from "@modern-js/runtime/router";
 import { useState } from "react";
 
 import AppFooter from "../components/app-footer";
+import AuthorQrcodeFloat from "../components/author-qrcode-float";
 import ErrorBoundary from "../components/error-boundary";
 import { sidebarMenus } from "../config/menu";
 import { APP_BASENAME, SYSTEM_NAME } from "../constants";
@@ -177,6 +178,7 @@ function AppShell() {
           <AppFooter />
         </ArcoLayout>
       </ArcoLayout>
+      <AuthorQrcodeFloat />
       {isMobile ? (
         <Drawer
           className="app-nav-drawer"
