@@ -109,17 +109,11 @@ body {
   cursor: pointer;
 }
 
-/* 顶栏右侧只放应用名(无用户区)。 */
-.app-header-right {
-  margin-left: auto;
-  color: var(--color-text-1);
-  font-weight: 600;
-}
-
 .app-content {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  background-color: var(--color-secondary);
 }
 
 /* PageContainer 根(UI 规范见 docs/admin.md):撑满内容区高度,

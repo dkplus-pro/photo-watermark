@@ -162,7 +162,6 @@ function AppShell() {
                 {mobileNavOpen ? <IconMenuUnfold /> : <IconMenuFold />}
               </span>
             ) : null}
-            <div className="app-header-right">{SYSTEM_NAME}</div>
           </Header>
           <Content className="app-content">
             {/* 页面级 ErrorBoundary:页面崩溃时侧边栏/顶栏仍可用。 */}
