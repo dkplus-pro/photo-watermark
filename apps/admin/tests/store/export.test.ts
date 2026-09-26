@@ -130,7 +130,7 @@ describe("addFiles 受理与判重", () => {
     expect(snapshot().files.length).toBeGreaterThan(MOBILE_SOFT_LIMIT);
   });
 
-  test("新入列表的条目处于「未读 EXIF、未探测尺寸」状态", () => {
+  test("新入列表的条目处于「未读 EXIF、未探测尺寸、未产缩略图」状态", () => {
     snapshot().addFiles([makeFile("x.jpg", 7)]);
 
     const entry = snapshot().files[0];
@@ -138,6 +138,7 @@ describe("addFiles 受理与判重", () => {
     expect(entry.exifReadAt).toBeNull();
     expect(entry.width).toBe(0);
     expect(entry.height).toBe(0);
+    expect(entry.thumb).toBeNull();
     expect(entry.size).toBe(7);
   });
 
@@ -196,6 +197,17 @@ describe("patchFile / removeFile / clearFiles", () => {
     const failed = snapshot().files[0];
     expect(failed.exif).toBeNull();
     expect(failed.exifReadAt).not.toBeNull();
+  });
+
+  test("缩略图补丁独立成路:EXIF 没回写时也能落进 entry(两路读取互不连累)", () => {
+    const entry = seedOne();
+    const thumb = new Blob(["thumb-bytes"], { type: "image/jpeg" });
+
+    snapshot().patchFile(entry.id, { thumb });
+
+    expect(snapshot().files[0].thumb).toBe(thumb);
+    // 缩略图不是「读过 EXIF」的凭据,不能顺带动 exifReadAt。
+    expect(snapshot().files[0].exifReadAt).toBeNull();
   });
 
   test("同值补丁短路:不产生新数组,也不通知订阅者", () => {

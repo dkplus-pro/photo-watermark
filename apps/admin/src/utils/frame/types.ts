@@ -39,6 +39,9 @@ export const JPEG_QUALITY = 0.92;
 /** 实时预览固定按长边渲染,与导出档位无关(D18)。 */
 export const PREVIEW_LONG_EDGE = 1200;
 
+/** 已选照片列表缩略图固定按长边渲染(见 utils/frame/thumbnail.ts)。 */
+export const THUMBNAIL_LONG_EDGE = 320;
+
 // ---------------------------------------------------------------- logo 大小
 
 /**
@@ -324,6 +327,16 @@ export interface RenderSurface {
 
 /** 解码期缩放(决策 D20):不支持 resizeWidth/Height 的环境退回全尺寸解码。 */
 export type DecodeImageScaled = (blob: Blob, target: OutputSize | null) => Promise<ImageBitmap>;
+
+/**
+ * 已选照片的列表缩略图:解码期缩放到小尺寸后重编码成独立小图。
+ * 返回 null 表示「不产缩略图」(源图尺寸未知 / 源图本就小于缩略尺寸 / 环境解不了),
+ * 列表退回直显原图的旧路径,调用方不得把它当错误。
+ */
+export type MakePhotoThumbnail = (
+  file: Blob,
+  sourceSize: OutputSize | null
+) => Promise<Blob | null>;
 
 // ---------------------------------------------------------------- 通用工具契约
 

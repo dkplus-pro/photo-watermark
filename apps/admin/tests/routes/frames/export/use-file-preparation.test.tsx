@@ -20,11 +20,15 @@ import {
 import { useExportStore } from "../../../../src/store/export";
 import { useFilePreparation } from "../../../../src/routes/frames/[styleId]/export/use-file-preparation";
 
-// 只替两个真异步边界:头部尺寸解析与 exifr,两者在 jsdom 里都没有真实现可跑。
+// 只替三个真异步边界:头部尺寸解析、exifr 与缩略图重编码,jsdom 里都没有真实现可跑。
+// (缩略图的替身在 export-test-doubles 里,默认按「尺寸未知 → 不产缩略图」的真实语义收敛。)
 vi.mock("../../../../src/utils/frame/export-pipeline", () => ({ ...exportTestDoubles }));
 vi.mock("../../../../src/utils/frame/fields", () => ({
   extractPhotoExif: exportTestDoubles.extractPhotoExif,
   frameFieldsFromExif: exportTestDoubles.frameFieldsFromExif
+}));
+vi.mock("../../../../src/utils/frame/thumbnail", () => ({
+  makePhotoThumbnail: exportTestDoubles.makePhotoThumbnail
 }));
 
 /** 往 store 里塞 n 张图并返回入队后的条目列表(store 会做判重与白名单过滤)。 */
@@ -74,6 +78,47 @@ describe("探测与回写", () => {
 
     expect(exportTestDoubles.probeSourceSize).toHaveBeenCalledTimes(2);
     expect(exportTestDoubles.extractPhotoExif).toHaveBeenCalledTimes(2);
+    expect(exportTestDoubles.makePhotoThumbnail).toHaveBeenCalledTimes(2);
+  });
+
+  test("缩略图按探测出的尺寸产一张小图,随探测结果一起回写进 entry", async () => {
+    const files = enqueue(1);
+    renderPreparation(files);
+
+    await waitFor(() => expect(storeFiles()[0].thumb).not.toBeNull());
+    // 缩略图吃的是源图 File 与探到的等比目标,不是另一个解析口径。
+    expect(exportTestDoubles.makePhotoThumbnail).toHaveBeenCalledWith(files[0].file, {
+      width: 4000,
+      height: 3000
+    });
+    expect(storeFiles()[0].thumb).toBeInstanceOf(Blob);
+  });
+
+  test("零值:尺寸未知时缩略图拿到的也是 null(方形目标会把非方形图压变形,宁可不产)", async () => {
+    exportTestDoubles.probeSourceSize.mockResolvedValue(null);
+    const files = enqueue(1);
+    renderPreparation(files);
+
+    await waitFor(() => expect(storeFiles()[0].exifReadAt).not.toBeNull());
+    expect(exportTestDoubles.makePhotoThumbnail).toHaveBeenCalledWith(files[0].file, null);
+    expect(storeFiles()[0].thumb).toBeNull();
+  });
+
+  test("准备阶段限并发:多张同入队时同时至多 2 张在途,避免主线程被解码连吃饱", async () => {
+    let active = 0;
+    let maxActive = 0;
+    exportTestDoubles.probeSourceSize.mockImplementation(async () => {
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      await Promise.resolve();
+      active -= 1;
+      return { width: 100, height: 100 };
+    });
+    enqueue(4);
+    renderPreparation(storeFiles());
+
+    await waitFor(() => expect(storeState().status).toBe("idle"));
+    expect(maxActive).toBe(2);
   });
 
   test("零值:尺寸读不出来时保持 0(这是「未知」的合法终态,不许无限重探)", async () => {

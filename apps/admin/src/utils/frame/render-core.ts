@@ -76,7 +76,7 @@ const isOffscreenCanvas = (canvas: RenderCanvas): canvas is OffscreenCanvas =>
   "convertToBlob" in canvas;
 
 /** 取 2d 上下文。分支后各自调用具体重载, 避免对联合类型直接调 `getContext` 的签名歧义。 */
-const contextOf = (canvas: RenderCanvas): FrameContext | null =>
+export const contextOf = (canvas: RenderCanvas): FrameContext | null =>
   isOffscreenCanvas(canvas) ? canvas.getContext("2d") : canvas.getContext("2d");
 
 /**
@@ -84,7 +84,7 @@ const contextOf = (canvas: RenderCanvas): FrameContext | null =>
  * `DecodeImageScaled` 的冻结签名不吃 `RenderSurface`, 回退路径只能自己按全局能力造画布
  * ——这是契约的既成代价, 两条渲染路径在此的行为因此天然一致。
  */
-const createBitmapCanvas = (width: number, height: number): RenderCanvas => {
+export const createBitmapCanvas = (width: number, height: number): RenderCanvas => {
   const candidate = (globalThis as { OffscreenCanvas?: unknown }).OffscreenCanvas;
   if (typeof candidate === "function") {
     const Offscreen = candidate as new (width: number, height: number) => OffscreenCanvas;
@@ -100,7 +100,7 @@ const createBitmapCanvas = (width: number, height: number): RenderCanvas => {
 };
 
 /** 画布只有把宽高归零才会立刻丢弃 backing store, 坐等 GC 是未定义行为。 */
-const releaseCanvas = (canvas: RenderCanvas): void => {
+export const releaseCanvas = (canvas: RenderCanvas): void => {
   try {
     canvas.width = 0;
     canvas.height = 0;
@@ -191,19 +191,27 @@ export const decodeImageScaled: DecodeImageScaled = async (blob, target) => {
  * 相对原字节放大约 1.33 倍,还要再解码一次才回到 Blob——一张 5MB 成品会同时在 JS 堆里躺着
  * 6.7MB 字符串和 5MB 数组,移动端的内存预算就是被这种中间串吃光的。
  */
-const encodeJpeg = async (canvas: RenderCanvas, quality: number): Promise<Blob> => {
-  if (isOffscreenCanvas(canvas)) return canvas.convertToBlob({ type: JPEG_MIME_TYPE, quality });
+export const encodeCanvasBlob = async (
+  canvas: RenderCanvas,
+  mimeType: string,
+  quality: number
+): Promise<Blob> => {
+  if (isOffscreenCanvas(canvas)) return canvas.convertToBlob({ type: mimeType, quality });
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (encoded) =>
         encoded
           ? resolve(encoded)
           : reject(new Error("浏览器未能把画布编码为 JPEG, 请重试或改用更小档位。")),
-      JPEG_MIME_TYPE,
+      mimeType,
       quality
     );
   });
 };
+
+/** JPEG 编码是导出与预览的唯一产物形态,质量由请求侧携带;实现即 `encodeCanvasBlob` 的定参版。 */
+const encodeJpeg = (canvas: RenderCanvas, quality: number): Promise<Blob> =>
+  encodeCanvasBlob(canvas, JPEG_MIME_TYPE, quality);
 
 /** logo 位图解码:失败不影响整张导出,退回文字块。 */
 const decodeLogoBitmap = async (logoBlob: Blob | null): Promise<ImageBitmap | null> => {

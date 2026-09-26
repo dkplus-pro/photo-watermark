@@ -35,6 +35,7 @@ import type {
   FrameFailure,
   FrameFieldsFromExif,
   FrameTaskResult,
+  MakePhotoThumbnail,
   OutputSize,
   RunFrameExport
 } from "../../../../src/utils/frame/types";
@@ -130,6 +131,9 @@ const probeSize: (file: Blob) => Promise<OutputSize | null> = async () => ({
 });
 const defaultExif: ExtractPhotoExif = async () => ({ cameraMake: "SONY" });
 const defaultFields: FrameFieldsFromExif = () => ({ brand: "SONY" });
+// 与真实实现同语义:尺寸未知 → 不产缩略图(返回 null),列表退回直显原图。
+const defaultThumbnail: MakePhotoThumbnail = async (_file, sourceSize) =>
+  sourceSize ? new Blob(["thumb-bytes"], { type: "image/jpeg" }) : null;
 
 export const exportTestDoubles = {
   catalog: {
@@ -147,6 +151,7 @@ export const exportTestDoubles = {
   probeSourceSize: vi.fn(probeSize),
   extractPhotoExif: vi.fn<ExtractPhotoExif>(defaultExif),
   frameFieldsFromExif: vi.fn<FrameFieldsFromExif>(defaultFields),
+  makePhotoThumbnail: vi.fn<MakePhotoThumbnail>(defaultThumbnail),
   // 真实取消语义,只是换个入口名暴露给页面(见文件头)。
   createCancelToken,
   isCancelledExport,
@@ -174,6 +179,8 @@ export function resetExportTestDoubles(): void {
   exportTestDoubles.extractPhotoExif.mockImplementation(defaultExif);
   exportTestDoubles.frameFieldsFromExif.mockReset();
   exportTestDoubles.frameFieldsFromExif.mockImplementation(defaultFields);
+  exportTestDoubles.makePhotoThumbnail.mockReset();
+  exportTestDoubles.makePhotoThumbnail.mockImplementation(defaultThumbnail);
   probeSourceSize.mockReset();
   probeSourceSize.mockImplementation(probeSize);
   // 不补默认实现的话 mockReset() 之后调用返回 undefined,用例会在 `summary.zip` 上炸出

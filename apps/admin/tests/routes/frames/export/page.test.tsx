@@ -723,26 +723,26 @@ describe("logo 三态 → 渲染入参", () => {
 });
 
 describe("栅格与移动端", () => {
-  test("桌面两栏:左表单 16 放三件套、右预览 8", () => {
+  test("桌面两栏:左表单 1/2(12)、右预览 1/2(12)", () => {
     const { container } = renderExportPage();
     const [formCol, previewCol] = layoutCols(container);
 
-    expect(spanOf(formCol)).toBe("16");
-    expect(spanOf(previewCol)).toBe("8");
+    expect(spanOf(formCol)).toBe("12");
+    expect(spanOf(previewCol)).toBe("12");
     expect(pickerLabelsIn(formCol)).toEqual(["image", "tier", "logo"]);
     expect(pickerLabelsIn(previewCol)).toEqual(["preview"]);
     expect(container.querySelector(".export-layout--mobile")).toBeNull();
   });
 
-  test("平板仍是两栏,只是表单让出 2 格给预览(14/10)", () => {
+  test("平板仍是同一套两栏比例(12/12),只随窄屏整体变窄", () => {
     exportTestDoubles.responsive.isTablet = true;
     const { container } = renderExportPage();
     const cols = layoutCols(container);
     const [formCol, previewCol] = cols;
 
     expect(cols).toHaveLength(2);
-    expect(spanOf(formCol)).toBe("14");
-    expect(spanOf(previewCol)).toBe("10");
+    expect(spanOf(formCol)).toBe("12");
+    expect(spanOf(previewCol)).toBe("12");
     expect(container.querySelector(".export-layout--mobile")).toBeNull();
   });
 
@@ -766,14 +766,15 @@ describe("栅格与移动端", () => {
     ]);
   });
 
-  test("断点切换后重渲染即改列宽(栅格由 use-responsive 单一口径驱动)", () => {
+  test("断点切换后重渲染仍保持两栏与同一比例(栅格由 use-responsive 单一口径驱动)", () => {
     const { container, rerender } = renderExportPage();
-    expect(spanOf(layoutCols(container)[0])).toBe("16");
+    expect(spanOf(layoutCols(container)[0])).toBe("12");
+    expect(spanOf(layoutCols(container)[1])).toBe("12");
 
     exportTestDoubles.responsive.isTablet = true;
     rerender(<FrameExportPage />);
-    expect(spanOf(layoutCols(container)[0])).toBe("14");
-    expect(spanOf(layoutCols(container)[1])).toBe("10");
+    expect(spanOf(layoutCols(container)[0])).toBe("12");
+    expect(spanOf(layoutCols(container)[1])).toBe("12");
   });
 
   test("D19:移动端越过软提示张数只提示、不拦人,点导出照样起跑", async () => {

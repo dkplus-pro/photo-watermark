@@ -133,18 +133,10 @@
 
 /* ---------------------------------------------------------------- logo 选择 */
 
-.logo-picker-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* 竖排radio 之间留出触摸余量(arco 的 radio 行高不足 20px,移动端点不准)。 */
-.logo-picker-option {
-  display: flex;
-  align-items: center;
-  min-height: 32px;
-  margin-left: 0;
+/* 收拢成下拉后选择器占满卡片内容宽;深底预览块只出现在下拉选项里,
+   触发器只回显纯文字(renderFormat)。 */
+.logo-picker-select {
+  width: 100%;
 }
 
 .logo-picker-option-name {
@@ -185,7 +177,8 @@
   font-size: 12px;
 }
 
-/* logo大小:标签左、数值右、滑杆吃满中间;上下留足行高,移动端才点得到细滑杆。 */
+/* logo大小:标签、滑杆、数值依次相邻,滑杆收短到 5–10 共 6 档刚好可对位刻度的宽度,
+   不再吃满整行;上下留足行高,移动端才点得到细滑杆。 */
 .logo-size-field {
   display: flex;
   margin-top: 16px;
@@ -199,7 +192,7 @@
 }
 
 .logo-size-slider {
-  flex: 1;
+  flex: 0 1 176px;
   min-width: 120px;
 }
 

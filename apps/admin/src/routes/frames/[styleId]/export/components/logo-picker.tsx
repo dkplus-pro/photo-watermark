@@ -1,7 +1,7 @@
 import {
   Button,
   Card,
-  Radio,
+  Select,
   Skeleton,
   Slider,
   Space,
@@ -22,17 +22,20 @@ import { LOGO_SIZE_MAX, LOGO_SIZE_MIN } from "../../../../../utils/frame/types";
 import "./components.css";
 
 /**
- * logo 选择器(阶段 11)。
+ * logo 选择器(阶段 11,选项集合后来从竖排 radio 收拢成 Select 下拉)。
  *
- * 它是三件事的组合,任何一条 arco 现成组件都不覆盖:
+ * 它是三件事的组合,任何一条 arco 现成组件都不完全覆盖:
  * 1. 选项集合是「不添加 + 清单项 + 自定义上传」的合成列表,其中「自定义 logo」**恒为末项**
  *    (需求原文的位置约定)且不在 `logos.json` 里,所以清单本身给不出这个顺序;
  * 2. 选中自定义项后要就地长出一个图片选择器与预览/移除,这一段是纯自定义交互;
  * 3. 预设 logo 图是为相框底部**黑色信息条**做的浅色图,直接铺在浅色卡片上等于看不见,
- *    所以预览必须垫深底(见 `.logo-picker-preview` 的 `--color-black`)。
+ *    所以预览必须垫深底(见 `.logo-picker-preview` 的 `--color-black`)。深底预览块放在
+ *    下拉选项里;收起后的触发器只回显纯文字(`renderFormat`),不占卡片的宽度预算。
+ *    下拉可搜索(`showSearch`),按展示名过滤——预设项是富内容,arco 默认的文本匹配
+ *    对它不可靠,所以过滤口径统一走触发器回显的同一段标签逻辑。
  *
  * 装载中/装载失败由页面呈现,本组件仍要能独立活下来:清单为空、条目字段缺失、id 撞上哨兵值
- * 都不能让它崩或让两个 radio 用同一个 value(value 相同会让 Radio.Group 的选中态互相顶掉)。
+ * 都不能让它崩或让两个 option 用同一个 value(value 相同会让 Select 的选中态互相顶掉)。
  */
 
 export interface LogoPickerProps {
@@ -54,6 +57,8 @@ const IMAGE_ACCEPT: UploadProps["accept"] = { type: "image/*", strict: false };
 
 /** arco 的 `UploadItem` 未从包根导出,按 props 派生。 */
 type UploadItem = NonNullable<UploadProps["fileList"]>[number];
+
+const { Option } = Select;
 
 const NO_LOGO_LABEL = "不添加";
 const CUSTOM_LOGO_LABEL = "自定义 logo";
@@ -113,7 +118,15 @@ export function LogoPicker({
   const customUrl = useObjectUrl(customFile);
   const isCustomChosen = value === CUSTOM_LOGO_ID;
 
-  // arco 的 `disabled` 只把触发按钮变灰,隐藏 input 仍在 DOM 里:实测直接对它派发 change
+  // 触发器只回显纯文字:富内容(深底预览块)留给下拉选项。value 不在合成列表里
+  // (清单换版本后的残留偏好)时回显空串,与「不选中任何项」的旧口径一致。
+  const triggerLabelOf = useMemoizedFn((optionValue: string | number | undefined): string => {
+    if (optionValue === NO_LOGO_ID) return NO_LOGO_LABEL;
+    if (optionValue === CUSTOM_LOGO_ID) return CUSTOM_LOGO_LABEL;
+    return options.find((option) => option.id === optionValue)?.label ?? "";
+  });
+
+  // arco 的 `disabled` 只把触发器变灰,隐藏 input 仍在 DOM 里:实测直接对它派发 change
   // 依旧会走到 onChange。导出进行中必须守住这条不变量,所以在自己的回调里再判一次。
   const handleCustomPick = useMemoizedFn((_fileList: UploadItem[], file: UploadItem) => {
     if (disabled) return;
@@ -125,31 +138,37 @@ export function LogoPicker({
       {loading ? (
         <Skeleton text={{ rows: 3, width: ["60%", "70%", "50%"] }} />
       ) : (
-        <Radio.Group
-          className="logo-picker-group"
+        <Select
+          className="logo-picker-select"
           value={value}
           disabled={disabled}
-          // Radio.Group 的值域是 string | number,这里只有落在合成列表里的 id 才写回 store。
+          showSearch
+          // 预设项是富内容(图 + 名),arco 默认按 option 文本匹配对它不可靠:
+          // 统一改按「展示名」过滤,两个哨兵项与预设项用同一句人话参与搜索。
+          filterOption={(inputValue, option) => {
+            const optionValue = (option?.props as { value?: string } | undefined)?.value;
+            return triggerLabelOf(optionValue)
+              .toLowerCase()
+              .includes(inputValue.trim().toLowerCase());
+          }}
+          // Select 的值域是 string | number,这里只有落在合成列表里的 id 才写回 store。
           onChange={(next) => {
             if (typeof next === "string" && allowedIds.includes(next)) onChange(next);
           }}
+          renderFormat={(option) => triggerLabelOf(option?.value)}
         >
-          <Radio className="logo-picker-option" value={NO_LOGO_ID}>
-            {NO_LOGO_LABEL}
-          </Radio>
+          <Option value={NO_LOGO_ID}>{NO_LOGO_LABEL}</Option>
           {options.map((option) => (
-            <Radio key={option.id} className="logo-picker-option" value={option.id}>
-              <Space>
+            <Option key={option.id} value={option.id}>
+              <Space className="logo-picker-option">
                 <LogoOptionPreview option={option} />
                 <span className="logo-picker-option-name">{option.label}</span>
               </Space>
-            </Radio>
+            </Option>
           ))}
           {/* 自定义项恒为末项:清单怎么改都不影响它的位置(需求原文约定)。 */}
-          <Radio className="logo-picker-option" value={CUSTOM_LOGO_ID}>
-            {CUSTOM_LOGO_LABEL}
-          </Radio>
-        </Radio.Group>
+          <Option value={CUSTOM_LOGO_ID}>{CUSTOM_LOGO_LABEL}</Option>
+        </Select>
       )}
 
       {isCustomChosen ? (
@@ -208,6 +227,8 @@ export function LogoPicker({
           max={LOGO_SIZE_MAX}
           min={LOGO_SIZE_MIN}
           step={1}
+          // 档位是 5–10 的整数:每档一个刻度线,连续滑杆变成了可对位的档位选择。
+          showTicks
           value={logoSize}
         />
         <Typography.Text className="logo-size-value" type="secondary">

@@ -35,7 +35,7 @@
   outline-offset: 2px;
 }
 
-/* 固定宽高比 + cover:手机 2 列下缩略图只裁不压扁。 */
+/* 固定宽高比 + cover:手机单列下缩略图只裁不压扁。 */
 .frame-card-media {
   aspect-ratio: 4 / 3;
   width: 100%;

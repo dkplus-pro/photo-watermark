@@ -2,6 +2,7 @@ import { Alert, Button, Card, Space, Typography, Upload } from "@arco-design/web
 import type { UploadProps } from "@arco-design/web-react";
 import { IconDelete, IconUpload } from "@arco-design/web-react/icon";
 import { useMemoizedFn } from "ahooks";
+import { memo } from "react";
 import sumBy from "lodash/sumBy";
 
 import { useObjectUrl } from "../../../../../hooks/use-object-url";
@@ -81,14 +82,30 @@ interface PhotoThumbProps {
  * 更关键的是**生命周期归属**——`useObjectUrl` 的语义是「谁创建谁释放」,只有每张图各自持有一个
  * hook,才能在「这一张被删」「整表清空」「组件卸载」三条路径上精确 revoke 它那一条 URL,
  * 全程不需要父组件攒 URL 数组手工回收(手写 revoke 正是 Safari 空白图的成因,D22)。
+ *
+ * 显示源优先 `entry.thumb`(准备阶段产的小图):object URL 指向原始文件时,浏览器为了一格
+ * ~100px 的缩略位要解码整幅位图并持有解码缓存,一次多选几张就把主线程顶住;
+ * 缩略图没产出(探测失败/HEIC)时退回原图,与旧路径一致。`memo` 让某一张的探测回写
+ * 不至于把整列表都拖着重渲染。
  */
-function PhotoThumb({ entry, disabled, touchFriendly, onRemove }: PhotoThumbProps) {
-  const url = useObjectUrl(entry.file);
+const PhotoThumb = memo(function PhotoThumb({
+  entry,
+  disabled,
+  touchFriendly,
+  onRemove
+}: PhotoThumbProps) {
+  const url = useObjectUrl(entry.thumb ?? entry.file);
   return (
     <li className="image-picker-item">
       <div className="image-picker-item-media">
         {url ? (
-          <img className="image-picker-item-thumb" src={url} alt="" loading="lazy" />
+          <img
+            className="image-picker-item-thumb"
+            src={url}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
         ) : (
           // 生成失败(隐私模式、配额耗尽)只丢这一张的缩略,这张图照样参与导出。
           <span className="image-picker-item-placeholder">无法显示</span>
@@ -114,7 +131,7 @@ function PhotoThumb({ entry, disabled, touchFriendly, onRemove }: PhotoThumbProp
       <div className="image-picker-item-size">{itemMetaOf(entry)}</div>
     </li>
   );
-}
+});
 
 export function ImagePicker({
   files,

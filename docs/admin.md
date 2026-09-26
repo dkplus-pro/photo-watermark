@@ -58,7 +58,7 @@ apps/admin/
 - **无后台范式**:本站没有列表分页、查询表单、增删改与权限按钮,不要再引入 `AuthGate`/`use-table-query` 那套;
 - **移动端是一等公民**(< 768px):
   - 侧边栏 `Sider` 换成 `Drawer`(同一份菜单渲染,不留两份实例);
-  - 相框列表一行 桌面 4 / 平板 3 / 手机 2;
+  - 相框列表一行 桌面 4 / 平板 3 / 手机单列;
   - 断点判定统一 `src/hooks/use-responsive.ts`(注意 ahooks `useResponsive` 的语义是 min-width),禁止裸读 `window.innerWidth`;
   - 触摸目标 ≥44px、弹框窄屏全宽、唯一操作入口不能只靠 hover;
   - 移动端批量 >20 张时给一条内存/耗时软提示(表单页与进度弹框各一处),不阻断。

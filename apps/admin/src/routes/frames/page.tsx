@@ -14,12 +14,12 @@ const { Row, Col } = Grid;
 // arco 栅格总列数,span 换算用。
 const ARCO_GRID_COLUMNS = 24;
 
-// 列数口径见 AGENTS.md 第 7 节:桌面 4 / 平板 3 / 手机 2。
+// 列数口径:桌面 4 / 平板 3 / 手机单列。
 // 这里存 span(24 栅格)而不是列数,渲染时不必每处再除一次。
 const COLUMN_SPAN = {
   desktop: 6,
   tablet: 8,
-  mobile: 12
+  mobile: 24
 } as const;
 
 type Viewport = keyof typeof COLUMN_SPAN;

@@ -177,21 +177,21 @@ describe("响应式列数", () => {
     expect(spansOfCells(container)).toEqual(["8", "8", "8"]);
   });
 
-  test("手机 2 列(span 12)", () => {
+  test("手机单列(span 24)", () => {
     responsiveMock.isMobile = true;
     const { container } = render(<FramesListPage />);
 
     expect(container.querySelector(".frame-grid--mobile")).not.toBeNull();
-    expect(spansOfCells(container)).toEqual(["12", "12", "12", "12"]);
+    expect(spansOfCells(container)).toEqual(["24", "24", "24", "24"]);
   });
 
-  test("占位卡数量跟列数走,手机 2 列只铺 2 张", () => {
+  test("占位卡数量跟列数走,手机单列只铺 1 张", () => {
     responsiveMock.isMobile = true;
     catalogMock.loading = true;
     catalogMock.frames = [];
     const { container } = render(<FramesListPage />);
 
-    expect(container.querySelectorAll(".frame-card-placeholder")).toHaveLength(2);
+    expect(container.querySelectorAll(".frame-card-placeholder")).toHaveLength(1);
   });
 });
 

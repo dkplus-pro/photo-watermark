@@ -43,6 +43,7 @@ function makeEntry(index: number, overrides: Partial<ExportFileEntry> = {}): Exp
     exifReadAt: null,
     width: 0,
     height: 0,
+    thumb: null,
     ...overrides
   };
 }
@@ -153,6 +154,21 @@ describe("列表渲染", () => {
     );
 
     expect(srcs).toEqual(["blob:mock-1", "blob:mock-2"]);
+    expect(urlScaffold.revoked).toEqual([]);
+  });
+
+  it("有小缩略图时 URL 只为缩略图而建(不为一张 ~100px 的缩略位解码整幅原图)", () => {
+    const thumb = new Blob(["thumb-bytes"], { type: "image/jpeg" });
+    const { container } = renderPicker({
+      files: [makeEntry(1, { thumb })]
+    });
+    const srcs = Array.from(container.querySelectorAll("img")).map(
+      (node) => node.getAttribute("src") ?? ""
+    );
+
+    // 只建了缩略图那一条 URL;原图的 URL 不创建,也不产生多余的 revoke。
+    expect(srcs).toEqual(["blob:mock-1"]);
+    expect(urlScaffold.created).toEqual(["blob:mock-1"]);
     expect(urlScaffold.revoked).toEqual([]);
   });
 

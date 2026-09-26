@@ -7,7 +7,7 @@ import { useEffect, useMemo } from "react";
 
 import PageContainer from "../../../../components/page-container";
 import { useFrameCatalog } from "../../../../hooks/use-frame-catalog";
-import { useIsMobile, useIsTablet } from "../../../../hooks/use-responsive";
+import { useIsMobile } from "../../../../hooks/use-responsive";
 import { MOBILE_SOFT_LIMIT, useExportStore } from "../../../../store/export";
 import { frameFieldsFromExif } from "../../../../utils/frame/fields";
 import ExportProgressModal from "./components/export-progress-modal";
@@ -131,9 +131,8 @@ export default function FrameExportPage() {
   const flow = useExportFlow({ files, styleId: readyStyleId ?? "", sizeTier, logoSize, logo });
 
   const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
-  // 桌面左表单右预览,平板窄一点也留两栏,移动端单列且预览排在表单之后(JSX 顺序即视觉顺序)。
-  const formSpan = isMobile ? 24 : isTablet ? 14 : 16;
+  // 两栏模式(桌面/平板)统一预览与表单各占一半;移动端单列且预览排在表单之后(JSX 顺序即视觉顺序)。
+  const formSpan = isMobile ? ARCO_GRID_COLUMNS : ARCO_GRID_COLUMNS / 2;
   // 单列时预览仍要占满 24:反算出的 span 0 会被 arco 的 `.arco-col-0{display:none}` 整块藏掉。
   const previewSpan = isMobile ? ARCO_GRID_COLUMNS : ARCO_GRID_COLUMNS - formSpan;
 

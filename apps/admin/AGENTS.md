@@ -61,6 +61,7 @@ public/         # 静态资源:清单 JSON、缩略图、logo、webfont,全部�
 - 并发数由 `memoryAwareConcurrency(输出宽, 输出高, 任务数)` 给出,**不允许**直接用 `navigator.hardwareConcurrency` 决定并发:一个 24MP 任务在途约 192MB,按核数开机会在移动端被系统杀页;
 - canvas 面积上限靠 `probeMaxCanvasArea()` **探测**(iOS Safari/安卓 WebView 有硬上限,超限静默产出空白图),探测结果全局 memoize;
 - **解码期缩放**:一律 `createImageBitmap(file, { resizeWidth, resizeHeight, resizeQuality: "high" })`,绝不先解原图全尺寸位图再缩(决策 D20)。不支持该选项时退回全尺寸解码 + 逐级减半 `drawImage`,回退路径要有用例;
+- **列表缩略图不许直显原图**:「照片」卡片的网格一律用 `utils/frame/thumbnail.ts` 在准备阶段产的小图(`ExportFileEntry.thumb`,运行时字段不进持久化),object URL 直指原图会让浏览器为一格 ~100px 的缩略位解码并缓存整幅位图,一次多选就把主线程顶住;缩略图产不出(探测失败/HEIC)才退回原图;
 - EXIF 继承走零拷贝拼接(决策 D8):`piexifjs` 只允许碰 ≤256KB 的头部字节,整幅 JPEG 必须用 `Blob` 分段拼接交给浏览器落盘。**禁止**任何把整幅图像 `arrayBuffer()` 后转成 latin1 字符串的写法(那是参考实现里 10MB → 4-6 倍内存放大的事故源头);
 - zip 用 `fflate` 的 `Zip` + `ZipPassThrough`(STORE,不二次压缩已经 JPEG 编码的字节),产物按 Blob 分片累积后一次 anchor 下载(决策 D5:移动端逐张下载不可用,已否决)。
 
@@ -75,7 +76,7 @@ public/         # 静态资源:清单 JSON、缩略图、logo、webfont,全部�
 
 - 断点判定统一走 `src/hooks/use-responsive.ts` 的 `useIsMobile()` / `useIsTablet()`(基于 ahooks `useResponsive`,注意它的语义是 **min-width**:`info[key] = innerWidth >= value`),禁止在组件里裸读 `window.innerWidth`;
 - **整壳适配**(决策 D12):<768px 时侧边栏 `Sider` 不渲染,同一份菜单树渲染进 `Drawer`(`placement="left"`),不允许两份菜单实例并存(选中态与展开态会分裂);纯视觉差异用 `@media`,交互差异才用 hook;
-- 相框列表列数:桌面 4 / 平板 3 / 手机 2;
+- 相框列表列数:桌面 4 / 平板 3 / 手机单列;
 - 移动端批量张数 >20 时给一条软提示(内存与耗时预期,表单页与进度弹框各一处),**不阻断**(决策 D19);
 - 触摸目标 ≥44px,弹框在窄屏全宽,禁止用桌面才成立的 hover 承载唯一操作入口。
 

@@ -37,7 +37,7 @@ pnpm + Turborepo monorepo,7 个应用(`apps/mobile` 为 Flutter 工程,不在 pn
 
 4. UI 优先用 `@arco-design/web-react` 基础组件,不满足才自定义;主题走 `@arco-themes/react-juzi001/theme.css` 覆盖在 `arco.css` 之后引入,不做暗色模式;
    4a. **本 app 无服务端、无登录、无鉴权**:禁止出现 API 客户端、token 处理、`AuthGate`、TanStack Query / ahooks `useRequest`;唯一允许的 `fetch` 是同源取 `public/` 下的清单 JSON 与预设 logo 图;
-5. 页面只剩两个:`/frames`(相框列表,网格一行 桌面 4 / 平板 3 / 手机 2,item 是缩略图卡片)与 `/frames/:styleId/export`(导出表单 + 实时预览)。左侧菜单只有「水印相框 → 相框列表」一项;菜单项必须带图标;新页面仍套 `PageContainer`(子路由用它的 `breadcrumb` prop 显式给尾项,因为 `matchMenuTrail` 走的是菜单声明);
+5. 页面只剩两个:`/frames`(相框列表,网格一行 桌面 4 / 平板 3 / 手机单列,item 是缩略图卡片)与 `/frames/:styleId/export`(导出表单 + 实时预览)。左侧菜单只有「水印相框 → 相框列表」一项;菜单项必须带图标;新页面仍套 `PageContainer`(子路由用它的 `breadcrumb` prop 显式给尾项,因为 `matchMenuTrail` 走的是菜单声明);
    5a. **无列表分页/查询表单/增删改**这类后台范式,规则 5c/5d 的 arco-pro search-table 与分页要求不再适用;表单页按字段复杂度直接用 `Form` + `Card`,不需要吸底栏;
 6. 目录分区:`src/utils`(`utils/frame/` 是渲染引擎,本 app 唯一的「业务内核」目录例外,允许放纯函数与 Worker)/ `components` / `hooks` / `routes`(页面)/ `store`(全局状态)/ `config` / `constants` / `types.ts`(运行时数据形状);
 7. 复用规则:2 个及以上页面用 → 提到 `src/components`、`src/hooks`;单页面用 → 留在页面目录内;客户端全局状态 → zustand(`src/store/`,每个领域一个 `useXxxStore`),持久化只允许 `partialize` 白名单写用户偏好,禁止持久化 `File` 与进行中的任务状态;

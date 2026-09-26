@@ -77,6 +77,11 @@ export interface ExportFileEntry {
   /** 源图尺寸,0 表示尚未探测。 */
   readonly width: number;
   readonly height: number;
+  /**
+   * 列表缩略图(小尺寸重编码,见 utils/frame/thumbnail.ts);null 表示未产出,
+   * 列表退回直显原图。运行时字段:与 File 同级,不进持久化白名单。
+   */
+  readonly thumb: Blob | null;
 }
 
 export type ExportStatus = "idle" | "preparing" | "exporting" | "done" | "failed";
@@ -101,10 +106,10 @@ export interface ExportState {
   addFiles: (files: readonly File[]) => void;
   removeFile: (id: string) => void;
   clearFiles: () => void;
-  /** 流水线探测回写(EXIF / 源图尺寸)。携带 exif 即视为「读过」。未知 id 静默忽略。 */
+  /** 流水线探测回写(EXIF / 源图尺寸 / 列表缩略图)。携带 exif 即视为「读过」。未知 id 静默忽略。 */
   patchFile: (
     id: string,
-    patch: Partial<Pick<ExportFileEntry, "exif" | "width" | "height">>
+    patch: Partial<Pick<ExportFileEntry, "exif" | "width" | "height" | "thumb">>
   ) => void;
   setStyleId: (id: string) => void;
   setSizeTier: (tier: SizeTierKey) => void;
@@ -172,7 +177,8 @@ export const useExportStore = create<ExportState>()(
               exif: null,
               exifReadAt: null,
               width: 0,
-              height: 0
+              height: 0,
+              thumb: null
             });
           }
           if (added.length === 0) return state;
@@ -199,13 +205,15 @@ export const useExportStore = create<ExportState>()(
             exif: exifChanged ? patch.exif : current.exif,
             exifReadAt: exifChanged ? Date.now() : current.exifReadAt,
             width: patch.width ?? current.width,
-            height: patch.height ?? current.height
+            height: patch.height ?? current.height,
+            thumb: patch.thumb ?? current.thumb
           };
           if (
             next.exif === current.exif &&
             next.exifReadAt === current.exifReadAt &&
             next.width === current.width &&
-            next.height === current.height
+            next.height === current.height &&
+            next.thumb === current.thumb
           ) {
             return state;
           }
