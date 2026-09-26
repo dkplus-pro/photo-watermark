@@ -5,10 +5,11 @@
 /* ---------------------------------------------------------------- 照片选择器 */
 
 /* 卡片自身的高度差交给内容,列表用 auto-fill 网格:列数随容器宽度自然增减,
-   窄容器(移动端卡片宽度约 100vw)自动降到 2-3 列,不必为列数再引一处 JS 判定。 */
+   窄容器(移动端卡片宽度约 100vw)自动降到 2-3 列,不必为列数再引一处 JS 判定。
+   上边距把列表与上方的上传拖拽区分开(否则二者贴成一块)。 */
 .image-picker-grid {
   display: grid;
-  margin: 0;
+  margin: 12px 0 0;
   padding: 0;
   grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 12px;
@@ -68,12 +69,18 @@
   min-height: 44px;
 }
 
-.image-picker-item-name {
+/* 主名与体积行必须归零外边距:ellipsis 模式下 arco 把 Text 渲染成 div,
+   `div.arco-typography` 自带 1em 下边距且优先级(0,1,1)高于单类,会把体积行
+   推离主名、在条目中间掏出一个 12px 的空洞——选择器提一级才压得住它。 */
+.image-picker-item .image-picker-item-name {
   max-width: 100%;
+  margin: 0;
   font-size: 12px;
+  line-height: 1.4;
 }
 
 .image-picker-item-size {
+  margin: 0;
   color: var(--color-text-3);
   font-size: 12px;
 }

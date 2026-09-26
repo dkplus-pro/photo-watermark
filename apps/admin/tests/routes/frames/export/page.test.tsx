@@ -128,7 +128,7 @@ vi.mock("../../../../src/routes/frames/[styleId]/export/components/frame-preview
 
 import FrameExportPage from "../../../../src/routes/frames/[styleId]/export/page";
 
-/** 页面右上角主按钮的文案(page.tsx 里就是这两个字)。 */
+/** 底部吸底操作条主按钮的文案(page.tsx 里就是这两个字)。 */
 const EXPORT_BUTTON = "导出";
 
 interface CapturedRun {
@@ -764,6 +764,18 @@ describe("栅格与移动端", () => {
       "logo",
       "preview"
     ]);
+  });
+
+  test("导出与重置固定在底部吸底操作条,不再占页头操作区(照片列表长了按钮也恒在可视区)", () => {
+    const { container } = renderExportPage();
+    const bar = container.querySelector<HTMLElement>(".export-actions");
+    const labels = bar
+      ? Array.from(bar.querySelectorAll("button")).map((button) => button.textContent)
+      : [];
+
+    expect(bar).not.toBeNull();
+    expect(labels).toEqual(["导出", "重置"]);
+    expect(container.querySelector(".app-page-extra")).toBeNull();
   });
 
   test("断点切换后重渲染仍保持两栏与同一比例(栅格由 use-responsive 单一口径驱动)", () => {

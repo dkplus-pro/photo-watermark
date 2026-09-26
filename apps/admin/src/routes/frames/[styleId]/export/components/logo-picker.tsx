@@ -25,8 +25,8 @@ import "./components.css";
  * logo 选择器(阶段 11,选项集合后来从竖排 radio 收拢成 Select 下拉)。
  *
  * 它是三件事的组合,任何一条 arco 现成组件都不完全覆盖:
- * 1. 选项集合是「不添加 + 清单项 + 自定义上传」的合成列表,其中「自定义 logo」**恒为末项**
- *    (需求原文的位置约定)且不在 `logos.json` 里,所以清单本身给不出这个顺序;
+ * 1. 选项集合是「不添加 + 自定义上传 + 清单项」的合成列表,其中「自定义 logo」**恒居第二位**
+ *    (仅随「不添加」之后)且不在 `logos.json` 里,所以清单本身给不出这个顺序;
  * 2. 选中自定义项后要就地长出一个图片选择器与预览/移除,这一段是纯自定义交互;
  * 3. 预设 logo 图是为相框底部**黑色信息条**做的浅色图,直接铺在浅色卡片上等于看不见,
  *    所以预览必须垫深底(见 `.logo-picker-preview` 的 `--color-black`)。深底预览块放在
@@ -158,6 +158,8 @@ export function LogoPicker({
           renderFormat={(option) => triggerLabelOf(option?.value)}
         >
           <Option value={NO_LOGO_ID}>{NO_LOGO_LABEL}</Option>
+          {/* 自定义项恒居第二位:清单怎么增减都不影响它的位置。 */}
+          <Option value={CUSTOM_LOGO_ID}>{CUSTOM_LOGO_LABEL}</Option>
           {options.map((option) => (
             <Option key={option.id} value={option.id}>
               <Space className="logo-picker-option">
@@ -166,8 +168,6 @@ export function LogoPicker({
               </Space>
             </Option>
           ))}
-          {/* 自定义项恒为末项:清单怎么改都不影响它的位置(需求原文约定)。 */}
-          <Option value={CUSTOM_LOGO_ID}>{CUSTOM_LOGO_LABEL}</Option>
         </Select>
       )}
 

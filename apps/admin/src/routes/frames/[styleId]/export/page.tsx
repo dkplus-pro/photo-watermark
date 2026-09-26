@@ -150,23 +150,6 @@ export default function FrameExportPage() {
     [firstEntry?.exif]
   );
 
-  const extra = (
-    <Space>
-      <Button
-        type="primary"
-        icon={<IconDownload />}
-        loading={flow.exporting}
-        disabled={readyStyleId === null}
-        onClick={handleStart}
-      >
-        导出
-      </Button>
-      <Button icon={<IconRefresh />} disabled={flow.exporting} onClick={flow.resetForm}>
-        重置
-      </Button>
-    </Space>
-  );
-
   const renderBody = () => {
     if (guard.kind === "loading") {
       return <Skeleton className="export-gate" text={{ rows: 6 }} />;
@@ -186,7 +169,7 @@ export default function FrameExportPage() {
                 className="export-hint"
                 type="warning"
                 title="还没有选择图片"
-                content="请先在下面添加至少一张要导出的照片, 再点右上角「导出」。"
+                content="请先在下面添加至少一张要导出的照片, 再点底部「导出」。"
               />
             ) : null}
             {isMobile && files.length > MOBILE_SOFT_LIMIT ? (
@@ -238,14 +221,29 @@ export default function FrameExportPage() {
   };
 
   return (
-    <PageContainer breadcrumb={BREADCRUMB} extra={extra}>
+    <PageContainer breadcrumb={BREADCRUMB}>
       {guard.kind === "ready" ? (
         // 样式名回显:用户从列表点进来,地址栏被 basename 遮住,页面里得说清是哪一款。
         <Typography.Text className="export-style-name" type="secondary">
           {`相框样式: ${guard.name}`}
         </Typography.Text>
       ) : null}
-      {renderBody()}
+      <div className="export-body">{renderBody()}</div>
+      {/* 操作条吸底(范式同壳层 .form-footer-bar):照片列表长了以后按钮仍恒在可视区。 */}
+      <div className="export-actions">
+        <Button
+          type="primary"
+          icon={<IconDownload />}
+          loading={flow.exporting}
+          disabled={readyStyleId === null}
+          onClick={handleStart}
+        >
+          导出
+        </Button>
+        <Button icon={<IconRefresh />} disabled={flow.exporting} onClick={flow.resetForm}>
+          重置
+        </Button>
+      </div>
       <ExportProgressModal
         visible={flow.modalVisible}
         status={status}

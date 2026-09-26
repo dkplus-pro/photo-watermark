@@ -26,6 +26,48 @@
   margin-bottom: 0;
 }
 
+/* 页面主体的最小下间距:内容超长时操作条的 auto 顶边距会归零,
+   这 16px 保证按钮条与最后一张卡片不贴死。 */
+.export-body {
+  margin-bottom: 16px;
+}
+
+/* footer 在滚动容器(.app-content)之外,滚动口底边就是 footer 顶边。
+   容器默认的 24px 底内边距会在吸底操作条与 footer 之间垫出一条空档,
+   本页把它收掉:操作条底边与 footer 顶边齐平。:has 只在导出页匹配,
+   离开本页(操作条不在 DOM)即恢复默认内边距,不影响其它页面。 */
+.app-content:has(.export-actions) {
+  padding-bottom: 0;
+}
+
+/* 操作条吸底(范式同壳层 .form-footer-bar,滚动容器是 .app-content):
+   内容不足一屏时 auto 顶边距把它压到页尾,超出一屏时钉在滚动口底部,
+   两种情况下底边都贴住 footer 顶边,按钮恒在可视区。 */
+.export-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: auto 0 0;
+  padding: 12px 16px;
+  background: var(--color-bg-2);
+  border-top: 1px solid var(--color-border-2);
+}
+
+@media (max-width: 767px) {
+  /* 移动端:两个按钮平铺整行并抬到 44px 触摸目标(AGENTS 第 7 节)。 */
+  .export-actions {
+    justify-content: stretch;
+  }
+
+  .export-actions .arco-btn {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
 /* 错误态不铺满整行:一句「样式不存在」拉通 1600px 读起来很怪。 */
 .export-gate {
   max-width: 640px;

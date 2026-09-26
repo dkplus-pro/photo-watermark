@@ -133,15 +133,10 @@ function AppShell() {
         {!isMobile ? (
           <Sider className="app-sider" width={220} collapsedWidth={60} collapsed={siderCollapsed}>
             <div className="app-logo">
-              {siderCollapsed ? (
-                SYSTEM_NAME.slice(0, 1)
-              ) : (
-                <>
-                  {/* public 资源必须经 assetUrl 拼 basePath,裸 `/assets/...` 在子路径部署下 404。 */}
-                  <img className="app-logo-img" src={assetUrl("assets/brand/logo.png")} alt="" />
-                  {SYSTEM_NAME}
-                </>
-              )}
+              {/* logo 图恒显示:收起后顶部是独立 logo,而不是应用名首字。
+                  public 资源必须经 assetUrl 拼 basePath,裸 `/assets/...` 在子路径部署下 404。 */}
+              <img className="app-logo-img" src={assetUrl("assets/brand/logo.png")} alt="" />
+              {!siderCollapsed ? SYSTEM_NAME : null}
             </div>
             <div
               className="app-sider-trigger"

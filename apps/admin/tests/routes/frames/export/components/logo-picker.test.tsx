@@ -9,7 +9,7 @@ import type { LogoCatalogEntry } from "../../../../../src/types";
  *
  * 六类边界对照:
  * - 空值:`logos` 为空数组、`source` 为空串(退化成 mark 文字块)、`customFile` 为 null;
- * - 零值:清单只有一项时顺序契约(首「不添加」、末「自定义」)仍然成立;
+ * - 零值:清单只有一项时顺序契约(前两位固定为「不添加」「自定义」)仍然成立;
  * - 越界 / 非法数据:id 撞上 `none` / `custom` 两个哨兵值(会让两个 option 用同一个 value、
  *   选中态互相顶掉)、条目为 null、`logos` 整个不是数组、残留偏好不在合成列表里;
  * - 上游失败:清单装载失败时页面喂空数组,本组件仍要能渲染出「不添加 + 自定义」这两项
@@ -122,11 +122,11 @@ afterEach(() => {
 });
 
 describe("选项集合与顺序", () => {
-  it("首项是「不添加」、末项是「自定义 logo」,中间严格按清单顺序", () => {
+  it("前两位固定为「不添加」「自定义 logo」,预设严格按清单顺序随后", () => {
     const { container } = renderPicker({ value: "juzi" });
     openDropdown(container);
 
-    expect(optionTexts()).toEqual(["不添加", "Acme 官方", "芥子", "自定义 logo"]);
+    expect(optionTexts()).toEqual(["不添加", "自定义 logo", "Acme 官方", "芥子"]);
     expect(selectedOptionTexts()).toEqual(["芥子"]);
   });
 
@@ -134,7 +134,7 @@ describe("选项集合与顺序", () => {
     const { container } = renderPicker({ logos: [PRESETS[0]] });
     openDropdown(container);
 
-    expect(optionTexts()).toEqual(["不添加", "Acme 官方", "自定义 logo"]);
+    expect(optionTexts()).toEqual(["不添加", "自定义 logo", "Acme 官方"]);
   });
 
   it("空值:清单为空(装载失败喂空数组)时仍给得出「不添加 + 自定义」,不会只剩一个光杆选项", () => {
@@ -158,7 +158,7 @@ describe("选项集合与顺序", () => {
     openDropdown(container);
     const texts = optionTexts();
 
-    expect(texts).toEqual(["不添加", "Acme 官方", "自定义 logo"]);
+    expect(texts).toEqual(["不添加", "自定义 logo", "Acme 官方"]);
     expect(screen.queryByText("撞车的不添加")).toBeNull();
   });
 
@@ -269,7 +269,7 @@ describe("搜索过滤", () => {
     expect(await search(container, "ACME")).toEqual(["Acme 官方"]);
   });
 
-  it("两个哨兵项用同一句人话参与搜索,不留「搜不到首末项」的死角", async () => {
+  it("两个哨兵项用同一句人话参与搜索,不留「搜不到哨兵项」的死角", async () => {
     const { container } = renderPicker();
     openDropdown(container);
 
@@ -281,7 +281,7 @@ describe("搜索过滤", () => {
     const { container } = renderPicker();
     openDropdown(container);
 
-    expect(await search(container, "  ")).toEqual(["不添加", "Acme 官方", "芥子", "自定义 logo"]);
+    expect(await search(container, "  ")).toEqual(["不添加", "自定义 logo", "Acme 官方", "芥子"]);
     fireEvent.click(optionByText("芥子"));
     expect(handlers.onChange).toHaveBeenCalledWith("juzi");
   });

@@ -64,6 +64,12 @@ body {
   object-fit: contain;
 }
 
+/* 侧栏收起后顶部只剩 logo 图:放大一档才撑得起 60px 窄栏,不至于缩成一个小点。 */
+.arco-layout-sider-collapsed .app-logo-img {
+  width: 28px;
+  height: 28px;
+}
+
 /* 侧边栏整栏折叠触发器(UI 规范见 docs/admin.md)。 */
 .app-sider-trigger {
   height: 40px;
