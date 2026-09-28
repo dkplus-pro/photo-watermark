@@ -140,9 +140,19 @@ pnpm build:pages                                  # 按 Pages 子路径构建 + 
 
 - **basePath 单一事实源**在 `modern.config.ts`:一个 `basePath` 变量同时决定 `output.assetPrefix`(带尾斜杠)、`source.define.__APP_BASE_PATH__`(不带,供 router basename 与 `assetUrl()` 使用)。优先级 `GITHUB_PAGES_BASE_PATH` > Actions 仓库名推断 > `ADMIN_BASE_PATH` > `/`;
 - 子路径部署时把 `__APP_BASE_PATH__` 与 `assetPrefix` 写歪一处就是白屏,改这里必须同时验证两种构建;
-- 生产构建注入 CSP meta,其中 `img-src` 必须含 `blob:`(图片预览与 zip 都是 Blob URL);
+- 生产构建注入 CSP meta,其中 `img-src` 必须含 `blob:`(图片预览与 zip 都是 Blob URL);`connect-src` 必须含 `https://rumt-zh.com`(腾讯云 RUM 上报域名,漏了 PV/UV 会静默丢失);
 - GitHub Pages 无 rewrite 能力,深链刷新由 `dist/404.html`(= `index.html` 副本)接管;
 - `.github/workflows/pages.yml` 只构建 admin,其余 app 不在发布链上。
+
+## 访问统计(腾讯云 RUM)
+
+PV/UV 与 JS 错误走**腾讯云可观测平台 RUM**(业务系统 `rum-g5sgyVtEaj931a.demo`,应用 `watermark`),SDK 是 `aegis-web-sdk`:
+
+- 采集面压到最小:只留 PV/UV 与 JS 错误,接口/资源测速、Web Vitals、gzip 压缩 Worker 全部关闭(见 `src/config/rum.ts`);
+- 初始化在 `src/config/rum.ts`(上报 ID + 配置),根布局 `layout.tsx` 的 `useRum()` 一次性装配;**仅 `NODE_ENV=production` 初始化**,dev 与单测不上报,不污染线上数据;
+- SPA 上报:配置 `spa: true`,路由切换自动补报 PV;UV 由 SDK 在 localStorage 生成的设备 `aid` 区分,匿名站无需用户标识;
+- **CSP 硬耦合**:上报域名默认 `https://rumt-zh.com`,生产 CSP 的 `connect-src` 必须放行(`modern.config.ts`);改 `hostUrl` 必须同批改 CSP,否则控制台没数据、页面还不报错(smoke 用例锁了这条);
+- 控制台:[https://console.cloud.tencent.com/rum](https://console.cloud.tencent.com/rum);建议在「应用接入」的数据上报域名校验里填线上 Pages 域名,防止上报 ID 被盗刷。
 
 ## 测试
 

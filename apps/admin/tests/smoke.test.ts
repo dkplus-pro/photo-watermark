@@ -43,6 +43,9 @@ test("basePath feeds both assetPrefix and router basename from one source (D11)"
   expect(configSource).toMatch(/img-src 'self' data: blob:/);
   // Modern.js 把路由清单写成内联脚本:script-src 不放行 inline,生产首屏直接白屏(已实测)。
   expect(configSource).toMatch(/script-src 'self' 'unsafe-inline'/);
+  // RUM 上报(src/config/rum.ts)是全站唯一的出网请求:connect-src 不放行 rumt-zh.com,
+  // PV/UV 会被静默拦截且页面无报错。
+  expect(configSource).toMatch(/connect-src 'self' https:\/\/rumt-zh\.com/);
 });
 
 test("随包 public 资源既被声明也按 /public 前缀解析(D10 回归)", async () => {
@@ -69,6 +72,8 @@ test("shell is anonymous: no auth, no query client, no server state", () => {
   expect(layoutSource).toMatch(/ErrorBoundary/);
   // 移动端整壳适配(D12):窄屏用 Drawer 承载导航。
   expect(layoutSource).toMatch(/Drawer/);
+  // PV/UV 埋点在根布局装配(src/config/rum.ts 的 useRum),删掉这行线上监控静默失联。
+  expect(layoutSource).toMatch(/useRum\(\)/);
 });
 
 test("sidebar declares only the watermark frame feature", () => {

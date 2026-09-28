@@ -43,7 +43,9 @@ const productionCSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
-  "connect-src 'self'"
+  // rumt-zh.com 是腾讯云 RUM 的上报域名(src/config/rum.ts),全站唯一的出网请求;
+  // 不放行的话 PV/UV 上报被静默拦截,页面无任何报错但控制台没有数据。
+  "connect-src 'self' https://rumt-zh.com"
 ].join("; ");
 
 const productionCSPMeta = {

@@ -11,6 +11,7 @@ import AppFooter from "../components/app-footer";
 import AuthorQrcodeFloat from "../components/author-qrcode-float";
 import ErrorBoundary from "../components/error-boundary";
 import { sidebarMenus } from "../config/menu";
+import { useRum } from "../config/rum";
 import { APP_BASENAME, SYSTEM_NAME } from "../constants";
 import { useIsMobile } from "../hooks/use-responsive";
 import { useUiStore } from "../store/ui";
@@ -26,6 +27,8 @@ const { Sider, Header, Content } = ArcoLayout;
 // 全局根布局:本站无鉴权、无服务端状态,壳层只做导航骨架与响应式切换。
 // 根级 ErrorBoundary 兜住壳层渲染错误,页面级 ErrorBoundary 兜住 Outlet 内错误(见阶段 9B)。
 export default function Layout() {
+  // PV/UV 埋点在壳层一次性装配(仅生产环境初始化,dev/单测不上报),随路由切换自动补报。
+  useRum();
   return (
     <ConfigProvider locale={zhCN}>
       <ErrorBoundary>

@@ -42,8 +42,8 @@ public/         # 静态资源:清单 JSON、缩略图、logo、webfont,全部�
 - **无服务端**:不引入任何 API 客户端、不出现 `axios`/`fetch(远程)`/`token`/`401` 处理,`openapi/` 契约链与本 app 无关(`gen:api` 已移除);
 - **无鉴权**:没有登录页、没有权限码、没有 `AuthGate`,全站匿名可用;
 - **无服务端状态**:不引入 TanStack Query / useRequest。运行期需要的数据只有两类:① `public/` 下的静态清单(经 `store/frame-catalog` 一次性装载并缓存),② 用户本地选择的 `File`;
-- 唯一允许的 `fetch` 是同源取 `public/` 下的资源:清单 JSON(`utils/catalog.ts` 经 `assetUrl(FRAMES_CATALOG_PATH)` / `assetUrl(LOGOS_CATALOG_PATH)`)与预设 logo 图(导出页 `routes/frames/[styleId]/export/logo-settings.ts`,失败降级为文字块不整页失败),生产 CSP 的 `connect-src 'self'` 会拦掉其他任何出网请求;
-- 用户数据不出机器:图片字节、EXIF、logo 全部留在本地,产物只有用户主动下载的那个 zip。
+- 唯一允许的出网请求有两类:① 同源取 `public/` 下的资源:清单 JSON(`utils/catalog.ts` 经 `assetUrl(FRAMES_CATALOG_PATH)` / `assetUrl(LOGOS_CATALOG_PATH)`)与预设 logo 图(导出页 `routes/frames/[styleId]/export/logo-settings.ts`,失败降级为文字块不整页失败);② 腾讯云 RUM 的 PV/UV 上报(`src/config/rum.ts` → `aegis-web-sdk`,仅生产环境初始化,上报域名 `https://rumt-zh.com`)。生产 CSP 的 `connect-src` 只放行 `'self'` 与 RUM 上报域名两项,新增出网需求必须同批改 `modern.config.ts` 并补 smoke 断言;
+- 用户数据不出机器:图片字节、EXIF、logo 全部留在本地,产物只有用户主动下载的那个 zip(访问统计只收 PV/UV 与 JS 错误,不碰图片内容)。
 
 ## 4. 渲染引擎纪律
 
@@ -104,7 +104,7 @@ public/         # 静态资源:清单 JSON、缩略图、logo、webfont,全部�
 
 - **basePath 单一事实源**(决策 D11):`modern.config.ts` 里一个 `basePath` 变量同时产出 `output.assetPrefix`(带尾斜杠)与 `source.define.__APP_BASE_PATH__`(不带),`src/constants.APP_BASENAME` 消费后者,`src/modern.runtime.ts` 用它做 router basename。任何「把两处分别写一遍」的改法都是白屏事故的源头;
 - 优先级:`GITHUB_PAGES_BASE_PATH` > Actions 仓库名推断 > `ADMIN_BASE_PATH` > `/`;
-- 生产 CSP meta 必含 `img-src 'self' data: blob:`(预览与产物都走 Blob URL)、`font-src 'self'`(webfont 已本地化)、`connect-src 'self'`;
+- 生产 CSP meta 必含 `img-src 'self' data: blob:`(预览与产物都走 Blob URL)、`font-src 'self'`(webfont 已本地化)、`connect-src 'self' https://rumt-zh.com`(腾讯云 RUM 上报域名;`src/config/rum.ts` 改 `hostUrl` 时必须同批改这里,smoke 用例锁了这条);
 - CSP 的 `script-src` 必须是 `'self' 'unsafe-inline'`:Modern.js 把路由清单以**内联脚本**写进 `index.html`(`window._MODERNJS_ROUTE_MANIFEST = …`),只放行同源外链脚本会把它拦掉,**整站白屏**(已实测);清单内容含每次构建变化的 chunk hash,也无法预置 `sha256`。Pages 不发响应头,meta 是唯一 CSP 通道,所以这条约束只能落在策略本身;
 - Pages 无 rewrite 能力:`scripts/deploy-github-pages.sh` 会把 `dist/index.html` 复制成 `dist/404.html`,让深链刷新由 SPA 接管(状态码仍是 404,但资源前缀是绝对路径,页面能渲染);
 - 只发布 admin 一个 app(决策 D1):`.github/workflows/pages.yml` 的构建范围固定为 `@monorepo-template/admin`,其余 6 个 app 与 Go 服务不在发布链上;
