@@ -13,6 +13,9 @@ export const COPYRIGHT_TEXT = "© 2026 dkplus 水印相框";
 export const FRAMES_CATALOG_PATH = "frames.json";
 export const LOGOS_CATALOG_PATH = "logos.json";
 
+// 压缩图片批量下载 zip 的文件名前缀(日期部分由 file-name.buildZipFileName 拼)。
+export const COMPRESS_ZIP_PREFIX = "image-compress";
+
 // 断点:与 arco Grid 的 xs/sm 分界一致,<768 视为移动端(整壳 Sider→Drawer);
 // >=1024 视为桌面(相框列表一行 4 列),两者之间为平板(一行 3 列)。
 export const MOBILE_BREAKPOINT = 768;

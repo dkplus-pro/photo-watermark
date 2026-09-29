@@ -12,12 +12,15 @@ import {
 } from "../../src/config/menu";
 
 describe("sidebarMenus", () => {
-  test("只声明水印相框一个功能:顶级项恰为一项,子项指向 /frames", () => {
-    expect(sidebarMenus).toHaveLength(1);
-    const root = sidebarMenus[0];
-    expect(root.title).toBe("水印相框");
-    expect(root.children?.map((child) => child.path)).toEqual(["/frames"]);
-    expect(root.children?.map((child) => child.title)).toEqual(["相框列表"]);
+  test("声明两个功能:水印相框(子项 /frames)与压缩图片(/compress)", () => {
+    expect(sidebarMenus).toHaveLength(2);
+    const [frame, compress] = sidebarMenus;
+    expect(frame.title).toBe("水印相框");
+    expect(frame.children?.map((child) => child.path)).toEqual(["/frames"]);
+    expect(frame.children?.map((child) => child.title)).toEqual(["相框列表"]);
+    expect(compress.title).toBe("压缩图片");
+    expect(compress.path).toBe("/compress");
+    expect(compress.children).toBeUndefined();
   });
 
   test("每个菜单项都带图标(折叠态只显示图标,禁止裸文字)", () => {
@@ -36,6 +39,11 @@ describe("sidebarMenus", () => {
 describe("matchMenuTrail 精确匹配", () => {
   test("叶子路径返回根到叶的标题链", () => {
     expect(matchMenuTrail("/frames").map((node) => node.title)).toEqual(["水印相框", "相框列表"]);
+  });
+
+  test("顶级叶子(压缩图片)只返回自身", () => {
+    expect(matchMenuTrail("/compress").map((node) => node.title)).toEqual(["压缩图片"]);
+    expect(matchMenuTitle("/compress")).toBe("压缩图片");
   });
 
   test("目录 key 本身命中时只返回目录链(目录不是路由,只作 SubMenu key)", () => {

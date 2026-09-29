@@ -76,10 +76,13 @@ test("shell is anonymous: no auth, no query client, no server state", () => {
   expect(layoutSource).toMatch(/useRum\(\)/);
 });
 
-test("sidebar declares only the watermark frame feature", () => {
+test("sidebar declares the static tools only (no backend-flavored entries)", () => {
   expect(menuSource).toMatch(/水印相框/);
   expect(menuSource).toMatch(/相框列表/);
   expect(menuSource).toMatch(/\/frames/);
+  // 压缩图片是第二个纯本地工具入口,路由 /compress;同样不允许出现后台范式的菜单。
+  expect(menuSource).toMatch(/压缩图片/);
+  expect(menuSource).toMatch(/\/compress/);
   expect(menuSource).not.toMatch(/permission/);
   expect(menuSource).not.toMatch(/system|media|dashboard|login/i);
 });

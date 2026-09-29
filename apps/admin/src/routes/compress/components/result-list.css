@@ -1,0 +1,137 @@
+.compress-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compress-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border-2);
+  border-radius: 4px;
+}
+
+.compress-row-media {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--color-fill-2);
+}
+
+.compress-row-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.compress-row-thumb-placeholder {
+  font-size: 12px;
+  color: var(--color-text-3);
+}
+
+.compress-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.compress-row-meta {
+  font-size: 12px;
+}
+
+.compress-row-status {
+  display: flex;
+  align-items: center;
+}
+
+.compress-row-working {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-2);
+  font-size: 13px;
+}
+
+.compress-row-failed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  max-width: 280px;
+}
+
+.compress-row-failed-message {
+  font-size: 12px;
+}
+
+.compress-row-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compress-row-sizes {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-1);
+  font-size: 13px;
+}
+
+.compress-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.compress-row-button--touch {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+@media (max-width: 767px) {
+  .compress-row {
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "media info actions"
+      "media status actions";
+    row-gap: 4px;
+  }
+
+  .compress-row-media {
+    grid-area: media;
+    width: 56px;
+    height: 56px;
+  }
+
+  .compress-row-info {
+    grid-area: info;
+  }
+
+  .compress-row-status {
+    grid-area: status;
+  }
+
+  .compress-row-actions {
+    grid-area: actions;
+    flex-direction: column;
+  }
+
+  .compress-row-result {
+    flex-wrap: wrap;
+  }
+
+  .compress-row-failed {
+    max-width: 100%;
+  }
+}

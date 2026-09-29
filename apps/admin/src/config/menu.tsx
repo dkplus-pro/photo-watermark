@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { IconApps, IconPalette } from "@arco-design/web-react/icon";
+import { IconApps, IconPalette, IconShrink } from "@arco-design/web-react/icon";
 
 // 静态菜单声明:本站无服务端、无鉴权,菜单即路由全集,不做任何运行期裁剪。
 // 带 children 的节点只作 SubMenu 的 key(如 /watermark-frame),本身不对应路由,无需为其建页面。
@@ -19,6 +19,11 @@ export const sidebarMenus: MenuConfig[] = [
     title: "水印相框",
     icon: <IconPalette />,
     children: [{ path: "/frames", title: "相框列表", icon: <IconApps /> }]
+  },
+  {
+    path: "/compress",
+    title: "压缩图片",
+    icon: <IconShrink />
   }
 ];
 

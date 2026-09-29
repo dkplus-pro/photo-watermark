@@ -125,16 +125,16 @@ export const uniqueName: UniqueName = (used, candidate) => {
 };
 
 /**
- * zip 产物文件名:`frame-export-YYYY-MM-DD.zip`。
+ * zip 产物文件名:`{prefix}-YYYY-MM-DD.zip`。prefix 缺省为相框导出的 `frame-export`。
  *
  * 年月日一律取本地时区:用户晚上导出时,`toISOString()`(UTC)会让文件名写上昨天,
  * 在东八区几乎每天下午之后都错。构造 Date 后读本地 getter 才是用户预期的日期。
  */
-export const buildZipFileName = (date: Date): string => {
+export const buildZipFileName = (date: Date, prefix: string = ZIP_FILE_PREFIX): string => {
   const year = String(date.getFullYear());
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-  return `${ZIP_FILE_PREFIX}-${year}-${month}-${day}${ZIP_EXTENSION}`;
+  return `${prefix}-${year}-${month}-${day}${ZIP_EXTENSION}`;
 };
 
 /** 列表里给用户看的主名:只剥扩展名,非法字符原样保留(展示不是落盘)。 */

@@ -9,13 +9,15 @@
 
 ```
 src/
-  utils/frame/  # 渲染引擎(纯函数 + Worker,本 app 的核心资产,见第 4 节)
-  utils/        # 公共纯函数:asset-url / catalog / download / file-name
+  utils/frame/  # 相框渲染引擎(纯函数 + Worker,本 app 的核心资产,见第 4 节)
+  utils/compress/ # 图片压缩引擎(纯函数 + Worker,架构纪律与渲染引擎同源,见第 4.5 节)
+  utils/        # 公共纯函数:asset-url / catalog / download / file-name,
+                # 以及两个引擎共用的底座:worker-pool.ts(通用 Worker 池)/ bitmap.ts(解码/画布/编码)
   components/   # 公共组件(PageContainer / AppFooter / ErrorBoundary / NotFound)
   config/       # 菜单声明等壳层配置(无主题常量散落)
-  constants/    # 常量:SYSTEM_NAME / APP_BASENAME / 断点 / 清单路径
+  constants/    # 常量:SYSTEM_NAME / APP_BASENAME / 断点 / 清单路径 / 压缩 zip 前缀
   hooks/        # 跨页面复用的组合式逻辑(use-responsive / use-object-url / use-frame-catalog)
-  store/        # zustand 领域 store(export / frame-catalog / ui),一个领域一个文件
+  store/        # zustand 领域 store(export / compress / frame-catalog / ui),一个领域一个文件
   routes/       # Modern.js 约定路由:页面只做数据编排与布局,不写渲染逻辑
   types.ts      # 运行时数据形状(JSON 清单等),与 utils/frame/types.ts 的渲染契约分层互不 import
 public/         # 静态资源:清单 JSON、缩略图、logo、webfont,全部经 assetUrl() 引用
@@ -24,10 +26,11 @@ public/         # 静态资源:清单 JSON、缩略图、logo、webfont,全部�
 **依赖方向硬规则**:
 
 - `routes → {components, hooks, store, utils, config, constants}`;
-- `utils/frame/**` 对外只允许 import 同目录模块与 `constants` / `utils/asset-url` / `utils/file-name`(纯命名工具),以及字节处理类三方库(`exifr` / `piexifjs` / `fflate`,只在主线程侧的 exif/fields/zip-writer 等处出现);禁止 import `store` / `routes` / `hooks` / arco / react(Worker 侧模块要能在 Worker 与 node 单测里独立运行);
+- `utils/frame/**` 对外只允许 import 同目录模块与 `constants` / `utils/asset-url` / `utils/file-name` / `utils/bitmap`(纯位图底座),以及字节处理类三方库(`exifr` / `piexifjs` / `fflate`,只在主线程侧的 exif/fields/zip-writer 等处出现);禁止 import `store` / `routes` / `hooks` / arco / react(Worker 侧模块要能在 Worker 与 node 单测里独立运行);
+- `utils/compress/**` 只允许 import 同目录模块与 `constants` / `utils/file-name` / `utils/bitmap` / `utils/worker-pool` / `utils/frame` 的 `capability`(`memoryAwareConcurrency`)与 `image-size-probe`(读头部字节;这两个是通用图像底座,评审时按「不含相框语义」把关);禁止 import `store` / `routes` / `hooks` / arco / react;
 - `utils/frame/types.ts` 是渲染契约唯一事实源,**冻结后不得随意改形状**(新增字段可以,改签名要同步全部实现并经评审);
-- `store/**` 不得 import `utils/frame/export-pipeline`(流水线由页面编排,store 只记录状态);
-- 页面与组件禁止裸触碰 `URL.createObjectURL`、`fetch`、`new Worker`,收口位置:`utils/download.ts` + `hooks/use-object-url.ts`(Blob URL)、`utils/catalog.ts` + 导出页 `logo-settings.ts`(同源 fetch)、`utils/frame/worker-pool.ts`(Worker);
+- `store/**` 不得 import `utils/frame/export-pipeline` 与 `utils/compress/compress-batch`(流水线/批处理由页面编排,store 只记录状态);
+- 页面与组件禁止裸触碰 `URL.createObjectURL`、`fetch`、`new Worker`,收口位置:`utils/download.ts` + `hooks/use-object-url.ts`(Blob URL)、`utils/catalog.ts` + 导出页 `logo-settings.ts`(同源 fetch)、`utils/worker-pool.ts`(通用 Worker 池,frame/compress 经各自的 `*-pool.ts` 工厂实例化);
 
 ## 2. arco 与主题
 
@@ -57,13 +60,24 @@ public/         # 静态资源:清单 JSON、缩略图、logo、webfont,全部�
 
 ## 5. Worker 与内存纪律
 
-- 渲染并行**必须**走 `utils/frame/worker-pool.ts`,主线程只在 `supportsWorkerRendering()` 为 false 时降级串行(降级路径必须存在且被测试覆盖);
+- 渲染并行**必须**走 `utils/frame/worker-pool.ts`(通用池在 `utils/worker-pool.ts`,frame 以 `FrameRenderRequest/FrameWorkerResult` 实例化),主线程只在 `supportsWorkerRendering()` 为 false 时降级串行(降级路径必须存在且被测试覆盖);压缩并行同样走通用池(`utils/compress/compress-pool.ts`),判定面是 `supportsCompressWorker()`(不要求 FontFace,与渲染的支持判定不同);
 - 并发数由 `memoryAwareConcurrency(输出宽, 输出高, 任务数)` 给出,**不允许**直接用 `navigator.hardwareConcurrency` 决定并发:一个 24MP 任务在途约 192MB,按核数开机会在移动端被系统杀页;
 - canvas 面积上限靠 `probeMaxCanvasArea()` **探测**(iOS Safari/安卓 WebView 有硬上限,超限静默产出空白图),探测结果全局 memoize;
 - **解码期缩放**:一律 `createImageBitmap(file, { resizeWidth, resizeHeight, resizeQuality: "high" })`,绝不先解原图全尺寸位图再缩(决策 D20)。不支持该选项时退回全尺寸解码 + 逐级减半 `drawImage`,回退路径要有用例;
 - **列表缩略图不许直显原图**:「照片」卡片的网格一律用 `utils/frame/thumbnail.ts` 在准备阶段产的小图(`ExportFileEntry.thumb`,运行时字段不进持久化),object URL 直指原图会让浏览器为一格 ~100px 的缩略位解码并缓存整幅位图,一次多选就把主线程顶住;缩略图产不出(探测失败/HEIC)才退回原图;
 - EXIF 继承走零拷贝拼接(决策 D8):`piexifjs` 只允许碰 ≤256KB 的头部字节,整幅 JPEG 必须用 `Blob` 分段拼接交给浏览器落盘。**禁止**任何把整幅图像 `arrayBuffer()` 后转成 latin1 字符串的写法(那是参考实现里 10MB → 4-6 倍内存放大的事故源头);
 - zip 用 `fflate` 的 `Zip` + `ZipPassThrough`(STORE,不二次压缩已经 JPEG 编码的字节),产物按 Blob 分片累积后一次 anchor 下载(决策 D5:移动端逐张下载不可用,已否决)。
+
+### 4.5 压缩图片引擎(utils/compress)
+
+`/compress` 页面的内核,架构纪律全部沿用渲染引擎,只做压缩语义:
+
+- **格式决策是纯函数**(`format.ts`):输出 MIME 的全部分支(智能/保持原格式/强制 WebP/强制 JPEG × 有无透明 × WebP 编码支持度)收敛在这一个模块并穷举单测;批处理只执行不决策。透明判定**保守**:宁可多走 WebP/PNG 保住透明,也不允许把透明图压成黑底 JPEG;
+- **单张内核双端同源**(`compress-core.ts`):Worker 与主线程降级调用同一个 `compressImage`;浏览器对不支持的编码 MIME 会静默回落(canvas 常回落 PNG),编码后必须按 `blob.type` 对账并用回退档重编一次,产物扩展名跟**实际 MIME** 走,绝不产出「内容是 PNG、名字是 .webp」的错位文件;
+- **批量调度**(`compress-batch.ts`):并发数走 `memoryAwareConcurrency`(未知源尺寸按 1200 万像素的保守口径参与预算);单张失败收敛为失败记录不中断批次(D7);池在 finally 里 terminate;取消只停后续派发,在途任务自然结束(压缩单张耗时短,轮询语义足够);
+- **压缩不做解码期缩放**(与渲染的 D20 相反是有意为之):压缩要「尺寸不变、体积变小」,画布面积=源图像素,内存预算因此按源尺寸算;
+- **入队即自动压缩**:store 只记录每张的 `queued → working → done | failed` 状态,批处理生命周期由页面 hook(use-compress-run)编排——「手里有一批在途任务」不是 store 动作;卸载时 working 条目先退回 queued 再取消令牌,不留「永远压缩中」的僵尸态;
+- WebP 编码支持探测(`webp-support.ts`,Safari 长期只解不编)全局 memoize,单独成模块便于在模块边界替身。
 
 ## 6. 数据流与状态
 

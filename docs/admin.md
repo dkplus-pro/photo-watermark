@@ -1,6 +1,11 @@
-# admin(水印相框)开发指南
+# admin(水印相框 + 压缩图片)开发指南
 
-`apps/admin` 是一个**完全静态、无服务端**的「水印相框」批量导出工具:用户在浏览器里选一批本地照片 + 一个 logo + 输出档位,前端用 Web Worker 并行渲染带相框与 EXIF 文字的 JPEG,继承源图 EXIF,打成一个 zip 下载。全程不上传任何图片数据,部署目标是 GitHub Pages。
+`apps/admin` 是一个**完全静态、无服务端**的浏览器端图片工具站,现有两个功能:
+
+1. **水印相框**(入口 `/frames`):用户选一批本地照片 + 一个 logo + 输出档位,前端用 Web Worker 并行渲染带相框与 EXIF 文字的 JPEG,继承源图 EXIF,打成一个 zip 下载;
+2. **压缩图片**(入口 `/compress`):tinypng 式拖拽入队即自动压缩,列表展示每张的体积变化,单张可下载、整批打 zip。
+
+两个功能全程不上传任何图片数据,部署目标是 GitHub Pages。
 
 技术栈:Modern.js(appTools,SPA)+ React 19 + TypeScript + Arco Design(芥子主题 3279)+ zustand + ahooks + lodash + Web Worker/OffscreenCanvas + exifr/piexifjs/fflate。
 
@@ -27,19 +32,32 @@ apps/admin/
       image-size-probe.ts 不解码的源图尺寸探测(读 JPEG/PNG/WebP 头部;读不出才退全尺寸解码一次)
       render-core.ts      单张渲染内核(Worker 与主线程降级共用)
       frame.worker.ts     Worker 侧渲染入口
-      worker-pool.ts      Worker 池(派发/取消/空闲回收)
+      worker-pool.ts      渲染 Worker 池(泛型通用池的 frame 实例化门面)
       preview-render.ts   实时预览参数策略(长边 1200 / 质量 0.85 / 不继承 EXIF / 主线程,与导出同一内核)
       export-pipeline.ts  流水线门面(页面唯一入口),实现拆为四块:
                           export-jobs(备任务) / export-batch(批次编排与降级) /
                           export-cancel(取消令牌) / zip-writer(fflate 流式 STORE 打包)
+    utils/compress/       压缩图片引擎(架构纪律与 frame 同源,页面唯一入口是 compress-batch)
+      format.ts           格式决策纯函数(输出 MIME × 模式 × 透明 × WebP 支持,穷举单测)
+      compress-core.ts    单张压缩内核(解码 → 可选垫白底 → 重编码,Worker/主线程同一实现)
+      compress.worker.ts  Worker 侧压缩入口
+      compress-pool.ts    压缩 Worker 池(通用池实例化 + supportsCompressWorker 判定)
+      compress-batch.ts   批量调度(格式决策先行 / 单张失败隔离 / 取消 / 池必销毁)
+      webp-support.ts     WebP 编码支持探测(Safari 只解不编,全局 memoize)
     utils/                asset-url.ts / catalog.ts / download.ts / file-name.ts
+                          worker-pool.ts(通用 Worker 池)/ bitmap.ts(解码/缩放/画布/编码底座)
     components/           PageContainer / AppFooter / ErrorBoundary / NotFound
     config/menu.tsx       侧边栏菜单声明(静态,无权限过滤)
-    constants/            SYSTEM_NAME / APP_BASENAME / 断点 / 清单路径
+    constants/            SYSTEM_NAME / APP_BASENAME / 断点 / 清单路径 / 压缩 zip 前缀
     hooks/                use-responsive / use-object-url / use-frame-catalog
-    store/                zustand:ui / export / frame-catalog(一个领域一个文件)
+    store/                zustand:ui / export / compress / frame-catalog(一个领域一个文件)
     routes/               约定式路由:layout.tsx(壳)、page.tsx(`/` 重定向 /frames)、$.tsx(404 兜底)、
-                          frames/page.tsx(列表)、frames/[styleId]/export/page.tsx(导出表单页)
+                          frames/page.tsx(列表)、frames/[styleId]/export/page.tsx(导出表单页)、
+                          compress/page.tsx(压缩图片页)
+      压缩页页面内模块:   components/{drop-zone,settings-card,result-list,summary-bar}.tsx
+                          + use-compress-preparation.ts(探尺寸/产缩略图)
+                          + use-compress-run.ts(入队即自动整批派发)
+                          + use-compress-download.ts(单张下载与 zip 打包)
       导出页页面内模块:   components/{image-picker,size-tier-picker,logo-picker,frame-preview,
                           export-progress-modal}.tsx + use-export-flow.ts(导出编排)
                           + use-file-preparation.ts(入队图片探尺寸/读 EXIF)+ style-guard.ts(地址守卫)
@@ -69,7 +87,8 @@ apps/admin/
   - `useUiStore`:壳层折叠态、移动端抽屉开关;
   - `useFrameCatalogStore`:`public/` 清单的装载与缓存(状态机 `idle → loading → ready | error`,失败可重试,in-flight 去重);
   - `useExportStore`:导出表单与长任务进度(文件列表、档位、logo、`done/total/failures`);
-- 只有**用户偏好**跨会话:`persist` + `partialize` 白名单(折叠态、档位、logoId)。`File`、渲染进度、`status` 一律不持久化;
+  - `useCompressStore`:压缩图片列表(每张 `queued → working → done | failed` + 产物)与设置(模式/质量);
+- 只有**用户偏好**跨会话:`persist` + `partialize` 白名单(折叠态、档位、logoId、压缩模式与质量)。`File`、渲染/压缩进度、`status` 一律不持久化;
 - 本站**没有服务端状态**概念:不装 TanStack Query、不用 ahooks `useRequest`、没有 API 层。页面提交导出是「用户动作 + 长任务」,由页面编排流水线、store 只记录结果;
 - 可复用逻辑抽成 hooks 放 `src/hooks/`,纯函数放 `src/utils/`。
 
@@ -118,6 +137,38 @@ apps/admin/
 - **`src/utils/download.ts` 的两条时序守卫**:anchor 必须先 `appendChild` 进文档再 `click`(Firefox 对游离节点根本不触发下载),`click` 后移除节点;object URL 一律经 `revokeObjectUrlLater(url, delayMs = 30_000)` 延迟回收,**默认值不许改成 0、也不许就地 revoke**(Firefox/Safari 在几百 MB 的 zip 上会断流或落 0 字节)。`document.body` 缺失时退回 `documentElement`,仍挂不上就静默返回 —— 下载结果由页面文案兜底,工具层不抛错。两条守卫分别对应 `tests/utils/download.test.ts` 的「硬规则 1 / 硬规则 2」用例。
 - **命名口径集中在 `src/utils/file-name.ts`**,页面与流水线都不自己拼文件名:`sanitizeBaseName`(剥扩展名 → 非法字符换 `_` → 清首尾空白与结尾点 → 按**码点**截断 80 → 空则 `untitled`,顺序不可调)、`uniqueName`(**纯函数:只读 `used` 不写**,登记由调用方做;序号插在扩展名之前 `a.jpg → a-2.jpg`)、`buildZipFileName`(**本地时区**年月日,禁用 `toISOString()`,否则东八区下午之后天天错一天)、`displayNameOf`(只剥扩展名,不动非法字符)、`formatByteSize`(`0 B` / KB / MB / GB,非法体积给 `—`)、`outputNameOf`。
 - 阶段 8 相对原方案的两处实现偏差,都是加强而非削弱:控制字符段用 `\p{Cc}` 代替字面量 `\x00-\x1f`(源码里不出现裸控制字符,顺带挡掉 C1 段 U+0080-U+009F);`uniqueName` 在 1000 格序号耗尽后的兜底链是「时间戳 → 4 位随机 → 确定性序号」而非只靠随机数,随机域被穷尽也能在有界步数内返回(1002 张同名文件的规模用例走的就是这条链)。
+
+## 压缩图片链路(`/compress`)
+
+```text
+用户拖入/选择图片(Upload 仅当取文件触发器,无任何请求)
+        │  store/compress.addFiles:图片受理 + 内容身份判重 → queued
+        ├─ use-compress-preparation:probeSourceSize(头部探测)+ makePhotoThumbnail(小图重编码)
+        │
+   use-compress-run:发现 queued 即整批派发(单飞守卫,任何时刻至多一批)
+        │  supportsWebpEncoding()(全局一次) ──► format.resolveOutputMime(逐张定 MIME)
+        │  memoryAwareConcurrency(源宽, 源高, 张数) → 并发数(未知尺寸按 12MP 保守口径)
+        │
+        CompressPool ── postMessage(CompressRequest) ──► Worker
+                                        │  createImageBitmap(全尺寸,压缩不改尺寸)
+                                        │  (输出 JPEG 且源图可能有透明 → 先垫白底)
+                                        │  OffscreenCanvas + convertToBlob({mime, quality})
+                                        │  blob.type 与请求不符 → 回退档重编(扩展名跟实际 MIME 走)
+        ◄── CompressResult ─────────────┘
+        │
+   逐张写回 store(queued → working → done | failed,守卫挡迟到回报)
+        │
+   单张:downloadBlob(blob, 消毒主名 + 实际扩展名)
+   整批:createZipWriter(STORE,同名 -2/-3 去重)→ downloadBlob("image-compress-YYYY-MM-DD.zip")
+```
+
+要点:
+
+- **格式决策先于派发**(`utils/compress/format.ts`,纯函数穷举单测):智能模式 JPEG 保持 JPEG、其余转 WebP;「保持原格式」只对 jpeg/png/webp 三种画布编得出的格式生效;强制模式在 WebP 编不出时按透明退 PNG/JPEG。透明判定一律**保守**(认不出就按有透明处理);
+- **压缩不做解码期缩放**是有意为之(与相框导出的 D20 相反):压缩要「尺寸不变、体积变小」,画布面积=源图像素,内存预算按源尺寸算;
+- **入队即自动压缩,没有「开始」按钮**:改设置只对之后添加的图片生效(设置卡有提示),不做「重压已有条目」的语义;
+- **取消的唯一出口是清空列表**:在途任务自然结束、产物丢弃;页面卸载时 working 条目先退回 queued 再作废令牌,重挂载后自动重新接手;
+- zip 打包、文件名去重、anchor 下载、Blob URL 生命周期与导出链路完全同源(`zip-writer` / `file-name` / `download` / `use-object-url`),没有第二套实现。
 
 ## 静态资源怎么替换
 

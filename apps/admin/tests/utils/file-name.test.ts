@@ -181,6 +181,13 @@ describe("buildZipFileName", () => {
     expect(buildZipFileName(new Date(2026, 8, 22, 23, 59))).toBe("frame-export-2026-09-22.zip");
   });
 
+  it("前缀可替换(压缩图片用 image-compress),缺省仍是相框导出前缀", () => {
+    expect(buildZipFileName(new Date(2026, 8, 22), "image-compress")).toBe(
+      "image-compress-2026-09-22.zip"
+    );
+    expect(buildZipFileName(new Date(2026, 8, 22))).toBe("frame-export-2026-09-22.zip");
+  });
+
   it("月份与日期补零(0-based 月份最容易写错)", () => {
     expect(buildZipFileName(new Date(2026, 0, 5, 12, 0))).toBe("frame-export-2026-01-05.zip");
     expect(buildZipFileName(new Date(2026, 11, 31, 0, 0))).toBe("frame-export-2026-12-31.zip");

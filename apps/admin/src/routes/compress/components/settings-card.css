@@ -1,0 +1,40 @@
+.compress-settings .arco-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.compress-settings-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.compress-settings-label {
+  flex: none;
+  width: 64px;
+  color: var(--color-text-2);
+}
+
+.compress-settings-slider {
+  flex: 1;
+  min-width: 160px;
+}
+
+.compress-settings-quality {
+  flex: none;
+  min-width: 44px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.compress-settings-hint {
+  font-size: 12px;
+}
+
+@media (max-width: 767px) {
+  .compress-settings-label {
+    width: 100%;
+  }
+}

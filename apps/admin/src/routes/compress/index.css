@@ -1,0 +1,8 @@
+/* 页面主体各区块的纵向间距;底部留 16px,保证吸底操作条与最后一张卡片不贴死
+   (与导出页 .export-body 同一处理)。 */
+.compress-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
