@@ -13,7 +13,7 @@ import type { FrameFields, FrameRenderRequest, OutputSize } from "./types";
  * 这四处差异若散进组件,页面与组件就开始持有渲染策略;收在这一个文件里,组件只管
  * 「什么时候画」和「画完的 Blob 怎么显示」。
  *
- * 依赖纪律与 utils/frame 其余模块一致:不 import react / hooks / store / arco,
+ * 依赖纪律与 utils/frame 其余模块一致:不 import react / hooks / store / semi,
  * 这样它在 node 与 Worker 语境下都能被单独测。
  */
 

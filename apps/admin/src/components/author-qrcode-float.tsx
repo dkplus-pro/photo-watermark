@@ -1,5 +1,5 @@
-import { IconQrcode } from "@arco-design/web-react/icon";
-import { Popover } from "@arco-design/web-react";
+import { IconQrCode } from "@douyinfe/semi-icons";
+import { Popover } from "@douyinfe/semi-ui";
 
 import { assetUrl } from "../utils/asset-url";
 
@@ -19,7 +19,7 @@ export default function AuthorQrcodeFloat() {
       }
     >
       <div className="author-qrcode-float" role="button" aria-label="作者二维码">
-        <IconQrcode />
+        <IconQrCode />
       </div>
     </Popover>
   );

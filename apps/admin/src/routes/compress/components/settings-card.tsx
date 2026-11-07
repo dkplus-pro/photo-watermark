@@ -1,12 +1,10 @@
-import { Card, Radio, Slider, Typography } from "@arco-design/web-react";
+import { Card, Radio, RadioGroup, Slider, Typography } from "@douyinfe/semi-ui";
 import { memo } from "react";
 
 import { QUALITY_MAX, QUALITY_MIN } from "../../../utils/compress/format";
 import type { CompressOutputMode } from "../../../utils/compress/format";
 
 import "./settings-card.css";
-
-const RadioGroup = Radio.Group;
 
 /**
  * 压缩设置卡:输出模式 + 质量滑杆。状态在 store(偏好,白名单持久化),
@@ -32,14 +30,12 @@ const MODE_OPTIONS: ReadonlyArray<{ value: CompressOutputMode; label: string }> 
 
 function SettingsCardImpl({ mode, quality, onModeChange, onQualityChange }: SettingsCardProps) {
   return (
-    <Card className="compress-settings" title="压缩设置" size="small">
+    <Card className="compress-settings" title="压缩设置">
       <div className="compress-settings-row">
         <span className="compress-settings-label">输出格式</span>
         <RadioGroup
           value={mode}
-          onChange={(value: string | number | boolean) =>
-            onModeChange(String(value) as CompressOutputMode)
-          }
+          onChange={(event) => onModeChange(String(event.target.value) as CompressOutputMode)}
         >
           {MODE_OPTIONS.map((option) => (
             <Radio key={option.value} value={option.value}>
@@ -56,7 +52,7 @@ function SettingsCardImpl({ mode, quality, onModeChange, onQualityChange }: Sett
           max={QUALITY_MAX}
           step={5}
           value={quality}
-          formatTooltip={(value) => `${String(value)}%`}
+          tipFormatter={(value) => `${String(value)}%`}
           onChange={(value) => onQualityChange(Number(value))}
         />
         <Typography.Text type="secondary" className="compress-settings-quality">

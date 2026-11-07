@@ -1,5 +1,5 @@
 /* 导出表单的四个组件样式(阶段 11:image-picker / size-tier-picker / logo-picker / frame-preview)。
-   纪律同 routes/frames/index.css:颜色一律取 Arco CSS 变量(主题层 @arco-themes/react-juzi001),
+   纪律同 routes/frames/index.css:颜色一律取 Semi 默认主题的 CSS 变量(--semi-color-*),
    不写死色值、不做暗色分支;纯视觉的端差异走 @media,交互差异才由组件里的断点 hook 决定。 */
 
 /* ---------------------------------------------------------------- 照片选择器 */
@@ -29,9 +29,9 @@
   position: relative;
   width: 100%;
   overflow: hidden;
-  background: var(--color-fill-1);
-  border: 1px solid var(--color-border-2);
-  border-radius: var(--border-radius-small);
+  background: var(--semi-color-fill-0);
+  border: 1px solid var(--semi-color-border);
+  border-radius: var(--semi-border-radius-small);
   aspect-ratio: 1 / 1;
 }
 
@@ -49,7 +49,7 @@
   height: 100%;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-3);
+  color: var(--semi-color-text-2);
   font-size: 12px;
 }
 
@@ -62,16 +62,16 @@
   opacity: 0.85;
 }
 
-/* 移动端触摸目标 ≥44px:arco 的 mini 圆钮只有 24px,点这里删一张图在触屏上是惩罚。
-   className 落在 arco 的 `<button>` 本身(arco 不额外包一层),所以只选它自己。 */
+/* 移动端触摸目标 ≥44px:Semi 的小号圆钮只有 20px 出头,点这里删一张图在触屏上是惩罚。
+   className 落在 Semi 的 `<button>` 本身(Semi 不额外包一层),所以只选它自己。 */
 .image-picker-item-remove--touch {
   min-width: 44px;
   min-height: 44px;
 }
 
-/* 主名与体积行必须归零外边距:ellipsis 模式下 arco 把 Text 渲染成 div,
-   `div.arco-typography` 自带 1em 下边距且优先级(0,1,1)高于单类,会把体积行
-   推离主名、在条目中间掏出一个 12px 的空洞——选择器提一级才压得住它。 */
+/* 主名与体积行必须归零外边距:ellipsis 模式下 Semi 把 Text 渲染成 div,
+   `div.semi-typography` 自带外边距且优先级(0,1,1)高于单类,会把体积行
+   推离主名、在条目中间掏出一个空洞——选择器提一级才压得住它。 */
 .image-picker-item .image-picker-item-name {
   max-width: 100%;
   margin: 0;
@@ -81,19 +81,17 @@
 
 .image-picker-item-size {
   margin: 0;
-  color: var(--color-text-3);
+  color: var(--semi-color-text-2);
   font-size: 12px;
 }
 
-/* arco 的拖拽区默认只包一层内联块,撑满整行才是「可以往里丢文件」的形状。 */
-.image-picker-upload .arco-upload-trigger {
+/* Semi 的拖拽区默认自适应内容,撑满整行才是「可以往里丢文件」的形状;
+   虚线边距收紧一点,留出与照片网格的呼吸感。 */
+.image-picker-upload .semi-upload-drag-area {
   width: 100%;
-}
-
-.image-picker-upload .arco-upload-trigger-drag {
   padding: 16px 12px;
   border-style: dashed;
-  border-radius: var(--border-radius-medium);
+  border-radius: var(--semi-border-radius-medium);
 }
 
 /* 移动端的主选图入口:整行按钮 + 44px 触摸目标。 */
@@ -108,14 +106,14 @@
 
 .image-picker-empty {
   margin: 12px 0 0;
-  color: var(--color-text-3);
+  color: var(--semi-color-text-2);
   font-size: 13px;
 }
 
 /* ---------------------------------------------------------------- 输出档位 */
 
 /* 档位的名字与兆数提示是同一道题的题干与条件,分两行放;
-   Radio.Group type="button" 的按钮宽度由内容撑开,窄容器下 arco 自己会换行。 */
+   RadioGroup type="button" 的按钮宽度由内容撑开,窄容器下 Semi 自己会换行。 */
 .size-tier-option {
   display: flex;
   align-items: flex-start;
@@ -128,7 +126,7 @@
 }
 
 .size-tier-option-hint {
-  color: var(--color-text-3);
+  color: var(--semi-color-text-2);
   font-size: 12px;
 }
 
@@ -141,13 +139,13 @@
 /* ---------------------------------------------------------------- logo 选择 */
 
 /* 收拢成下拉后选择器占满卡片内容宽;深底预览块只出现在下拉选项里,
-   触发器只回显纯文字(renderFormat)。 */
+   触发器只回显纯文字(renderSelectedItem)。 */
 .logo-picker-select {
   width: 100%;
 }
 
 .logo-picker-option-name {
-  color: var(--color-text-1);
+  color: var(--semi-color-text-0);
 }
 
 /* 预设 logo 是给相框底部**黑色信息条**做的浅色图,铺在浅色卡片上等于看不见,
@@ -159,10 +157,10 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  color: var(--color-white);
+  color: var(--semi-color-white);
   font-size: 12px;
-  background: var(--color-black);
-  border-radius: var(--border-radius-small);
+  background: var(--semi-color-black);
+  border-radius: var(--semi-border-radius-small);
   object-fit: contain;
 }
 
@@ -195,7 +193,7 @@
 
 .logo-size-label {
   flex-shrink: 0;
-  color: var(--color-text-1);
+  color: var(--semi-color-text-0);
 }
 
 .logo-size-slider {
@@ -217,8 +215,8 @@
   display: block;
   width: 100%;
   height: auto;
-  background: var(--color-fill-1);
-  border-radius: var(--border-radius-small);
+  background: var(--semi-color-fill-0);
+  border-radius: var(--semi-border-radius-small);
 }
 
 /* 出图前的占位高度与常见 3:4 竖构图接近,避免画面到位时整页跳动。 */
@@ -227,8 +225,8 @@
   min-height: 200px;
   align-items: center;
   justify-content: center;
-  background: var(--color-fill-1);
-  border-radius: var(--border-radius-small);
+  background: var(--semi-color-fill-0);
+  border-radius: var(--semi-border-radius-small);
 }
 
 .frame-preview-error {
@@ -240,13 +238,13 @@
 }
 
 /* 窄屏:预览卡片顶部的说明文案(「恒按长边 1200px」)与标题各占一行,
-   否则 arco 的 Card header 一行里挤不下,文案会被截成半句。 */
+   否则 Semi 的 Card header 一行里挤不下,文案会被截成半句。 */
 @media (width <= 768px) {
-  .frame-preview .arco-card-header {
+  .frame-preview .semi-card-header {
     display: block;
   }
 
-  .frame-preview .arco-card-header-extra {
+  .frame-preview .semi-card-header-wrapper-extra {
     margin-top: 2px;
     font-size: 12px;
   }

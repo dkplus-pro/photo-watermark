@@ -30,7 +30,7 @@ import type { FrameTaskResult, RenderFrameBatch, RunFrameExport } from "./types"
  * - **取消是停止派发而不是回滚**:已完成的字节不进包(包也不要了),在途任务被池 reject,
  *   抛 `CancelledExportError` 让页面走「已取消」分支而不是「导出失败」分支。
  *
- * 依赖纪律:不 import react/arco/store(`apps/admin/AGENTS.md` 第 1 节)。`fflate` 与
+ * 依赖纪律:不 import react/semi/store(`apps/admin/AGENTS.md` 第 1 节)。`fflate` 与
  * `utils/file-name` 出现在这一层是流水线专属的:本文件与 `zip-writer.ts` 只在主线程运行,
  * 不进 Worker;Worker 侧的 `frame.worker.ts` / `render-core.ts` 依旧零第三方运行时依赖。
  *

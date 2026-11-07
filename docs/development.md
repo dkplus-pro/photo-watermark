@@ -2,7 +2,7 @@
 
 本仓库是一个 pnpm + Turborepo monorepo,包含两个应用:
 
-- `apps/admin` — Modern.js + React 19 + Arco Design 管理后台
+- `apps/admin` — Modern.js + React 19 + Semi Design 管理后台
 - `apps/server` — Go 编写的 API 服务
 
 详细规范按方向拆分:[admin 开发规范](./admin.md) · [server 开发规范](./server.md)。

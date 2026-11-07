@@ -1,4 +1,4 @@
-import { Layout } from "@arco-design/web-react";
+import { Layout } from "@douyinfe/semi-ui";
 
 import { COPYRIGHT_TEXT } from "../constants";
 

@@ -14,9 +14,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-// arco 内部走 findDOMNode(React 19 已移除),真机由 routes/layout.tsx 统一补适配层;
-// 用例直接渲染弹框,故这里补同一入口,免得只有测试环境炸。
-import "@arco-design/web-react/es/_util/react-19-adapter";
+// Semi 的命令式/弹层能力在 React 19 下需要官方 react19-adapter 注入 createRoot,
+// 真机由 routes/layout.tsx 统一补适配层;用例直接渲染弹框,故这里补同一入口。
+import "@douyinfe/semi-ui/react19-adapter";
 
 import ExportProgressModal from "../../../../../src/routes/frames/[styleId]/export/components/export-progress-modal";
 import type { ExportProgressModalProps } from "../../../../../src/routes/frames/[styleId]/export/components/export-progress-modal";
@@ -57,12 +57,12 @@ function makeProps(overrides: Partial<ExportProgressModalProps> = {}): ExportPro
 
 function renderModal(overrides: Partial<ExportProgressModalProps> = {}) {
   const view = render(<ExportProgressModal {...makeProps(overrides)} />);
-  return { ...view, modal: () => document.body.querySelector(".arco-modal") };
+  return { ...view, modal: () => document.body.querySelector(".semi-modal") };
 }
 
 /** 弹框内容在 body 末尾的 portal 里,container 查不到,统一从 body 取。 */
 function wrapper(): HTMLElement {
-  const node = document.body.querySelector<HTMLElement>(".arco-modal-wrapper");
+  const node = document.body.querySelector<HTMLElement>(".semi-modal-wrap");
   if (!node) throw new Error("弹框 wrapper 未挂载");
   return node;
 }
@@ -78,7 +78,7 @@ function failureRows(): string[] {
   );
 }
 
-/** 点遮罩 = wrapper 上 mousedown + click(target 必须是 wrapper 自身,arco 以此判定「点在遮罩上」)。 */
+/** 点遮罩 = wrap 上 mousedown + click(target 必须是 wrap 自身,Semi 以此判定「点在遮罩上」)。 */
 function clickMask(): void {
   const node = wrapper();
   fireEvent.mouseDown(node);
@@ -86,8 +86,8 @@ function clickMask(): void {
 }
 
 function pressEscape(): void {
-  const modal = document.body.querySelector(".arco-modal");
-  fireEvent.keyDown(modal as Element, { key: "Escape" });
+  // Semi 的 Esc 监听挂在 document 上(closeOnEsc 打开时)。
+  fireEvent.keyDown(document.body, { key: "Escape" });
 }
 
 beforeEach(() => {
@@ -125,7 +125,7 @@ describe("准备中(preparing)", () => {
     renderModal({ status: "preparing" });
 
     expect(screen.queryByRole("button", { name: /取消导出/u })).not.toBeInTheDocument();
-    expect(document.body.querySelector(".arco-modal-close-icon")).toBeNull();
+    expect(document.body.querySelector(".semi-modal-close")).toBeNull();
     clickMask();
     pressEscape();
     expect(onDismiss).not.toHaveBeenCalled();
@@ -155,7 +155,7 @@ describe("导出中(exporting)", () => {
       renderModal({ total, done: 0, failedCount: 0 });
       expect(progressValue()).toBe("0");
       expect(
-        document.body.querySelector(".arco-progress-line-text")?.textContent ?? ""
+        document.body.querySelector(".semi-progress-line-text")?.textContent ?? ""
       ).not.toContain("NaN");
       cleanup();
     }
@@ -185,7 +185,7 @@ describe("导出中(exporting)", () => {
   test("非法状态迁移:exporting 期间遮罩、Esc、关闭图标三条路都不回调,唯一出口是取消", () => {
     renderModal();
 
-    expect(document.body.querySelector(".arco-modal-close-icon")).toBeNull();
+    expect(document.body.querySelector(".semi-modal-close")).toBeNull();
     clickMask();
     pressEscape();
     expect(onDismiss).not.toHaveBeenCalled();
@@ -200,7 +200,7 @@ describe("导出中(exporting)", () => {
     renderModal({ total: MOBILE_SOFT_LIMIT + 1 });
 
     expect(screen.getByText(/会较慢且占内存/u)).toBeInTheDocument();
-    expect(document.body.querySelectorAll(".arco-modal-footer .arco-btn")).toHaveLength(1);
+    expect(document.body.querySelectorAll(".semi-modal-footer .semi-button")).toHaveLength(1);
   });
 
   test("桌面同张数不提示(预算讲的是移动端),窄屏弹框换全宽", () => {
@@ -210,7 +210,7 @@ describe("导出中(exporting)", () => {
     cleanup();
     exportTestDoubles.responsive.isMobile = true;
     renderModal({ total: MOBILE_SOFT_LIMIT + 1 });
-    const modal = document.body.querySelector(".arco-modal") as HTMLElement;
+    const modal = document.body.querySelector(".semi-modal") as HTMLElement;
     expect(modal.getAttribute("style") ?? "").toContain("calc(100vw - 24px)");
   });
 });
@@ -307,10 +307,10 @@ describe("idle", () => {
   test("取消后 store 归 idle:正文与页脚都空、关闭图标不再被锁(弹框由页面按 visible 收掉)", () => {
     renderModal({ status: "idle", total: 0, done: 0 });
 
-    const content = document.body.querySelector(".arco-modal-content") as HTMLElement;
+    const content = document.body.querySelector(".semi-modal-body") as HTMLElement;
     expect(content.textContent).toBe("");
     expect(document.body.querySelector(".arco-modal-footer")).toBeNull();
     expect(document.body.querySelector('[role="progressbar"]')).toBeNull();
-    expect(document.body.querySelector(".arco-modal-close-icon")).not.toBeNull();
+    expect(document.body.querySelector(".semi-modal-close")).not.toBeNull();
   });
 });

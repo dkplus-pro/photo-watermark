@@ -68,10 +68,11 @@ test("shell is anonymous: no auth, no query client, no server state", () => {
   expect(layoutSource).not.toMatch(/QueryClientProvider/);
   expect(layoutSource).not.toMatch(/useAuthStore/);
   expect(layoutSource).not.toMatch(/Navigate to="\/login"/);
-  expect(layoutSource).toMatch(/ConfigProvider/);
+  // Semi 在 React 19 下必须由 react19-adapter 先行注入 createRoot(见 layout.tsx 文件头注释)。
+  expect(layoutSource).toMatch(/react19-adapter/);
   expect(layoutSource).toMatch(/ErrorBoundary/);
-  // 移动端整壳适配(D12):窄屏用 Drawer 承载导航。
-  expect(layoutSource).toMatch(/Drawer/);
+  // 移动端整壳适配(D12):窄屏用 Semi 的 SideSheet 承载导航。
+  expect(layoutSource).toMatch(/SideSheet/);
   // PV/UV 埋点在根布局装配(src/config/rum.ts 的 useRum),删掉这行线上监控静默失联。
   expect(layoutSource).toMatch(/useRum\(\)/);
 });

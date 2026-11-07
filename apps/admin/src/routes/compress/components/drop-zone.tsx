@@ -1,6 +1,6 @@
-import { Button, Typography, Upload } from "@arco-design/web-react";
-import type { UploadProps } from "@arco-design/web-react";
-import { IconPlus, IconUpload } from "@arco-design/web-react/icon";
+import { IconPlus, IconUpload } from "@douyinfe/semi-icons";
+import { Button, Typography, Upload } from "@douyinfe/semi-ui";
+import type { UploadProps } from "@douyinfe/semi-ui/lib/es/upload";
 import { useMemoizedFn } from "ahooks";
 import { memo } from "react";
 
@@ -11,11 +11,12 @@ import "./drop-zone.css";
 /**
  * 拖拽选图区(压缩页的入口,tinypng 式大拖拽区)。
  *
- * 与导出页 image-picker 同一条 Upload 用法纪律:arco 的 `Upload` 只当**取文件的触发器**
+ * 与导出页 image-picker 同一条 Upload 用法纪律:Semi 的 `Upload` 只当**取文件的触发器**
  * (它负责渲染 `<input type="file" multiple>` 与拖拽事件),文件列表的事实源在 store/compress;
- * `autoUpload={false}` 且不给 `action`,arco 因此不建任何请求(本站无服务端)。
- * `accept.strict` 必须关:开着时 arco 按后缀把 `file.type` 为空的 heic 直接丢弃,
- * 而这类图要收进来、在解码期作为单张失败呈现(与导出页同口径)。
+ * `uploadTrigger="custom"` 且不给 `action`,Semi 因此不建任何请求(本站无服务端)。
+ * accept 里必须显式追加 `.heic/.heif`:Semi 对 accept 做的是 JS 硬过滤(不只挂在 input 上),
+ * heic 的 `file.type` 常为空串、过不了 `image/*` 的 MIME 匹配,会被选择期静默丢弃;
+ * 追加扩展名后这类图仍能进来,在解码期作为单张失败呈现(与导出页同口径)。
  *
  * 两种形态:
  * - hero(列表为空):大拖拽区,桌面可拖可点,移动端换成主按钮(触屏没有「拖拽」动作);
@@ -27,18 +28,18 @@ export interface DropZoneProps {
   onAdd(files: readonly File[]): void;
 }
 
-/** 传给 arco 的 accept 形状:对象形态才能同时带上 `strict: false`。 */
-const IMAGE_ACCEPT: UploadProps["accept"] = { type: "image/*", strict: false };
+/** 传给 Semi 的 accept:`image/*` 加 heic 扩展名,空 MIME 的 heic 才能过 JS 过滤。 */
+const IMAGE_ACCEPT: NonNullable<UploadProps["accept"]> = "image/*,.heic,.heif";
 
 type UploadItem = NonNullable<UploadProps["fileList"]>[number];
 
 function DropZoneImpl({ compact, onAdd }: DropZoneProps) {
   const isMobile = useIsMobile();
 
-  // arco 每选中一个文件回调一次(第二参即本次新增的那一个),多选是 N 次 onAdd,
-  // store 的 addFiles 逐次追加并按签名判重。
-  const handleUploadChange = useMemoizedFn((_fileList: UploadItem[], file: UploadItem) => {
-    if (file.originFile) onAdd([file.originFile]);
+  // Semi 每选中一个文件回调一次(onChange 逐文件触发,currentFile 即本次新增的那一个),
+  // 多选是 N 次 onAdd,store 的 addFiles 逐次追加并按签名判重。
+  const handleUploadChange = useMemoizedFn(({ currentFile }: { currentFile: UploadItem }) => {
+    if (currentFile?.fileInstance) onAdd([currentFile.fileInstance]);
   });
 
   if (compact) {
@@ -47,12 +48,12 @@ function DropZoneImpl({ compact, onAdd }: DropZoneProps) {
         <Upload
           accept={IMAGE_ACCEPT}
           multiple
-          drag={!isMobile}
-          autoUpload={false}
+          draggable={!isMobile}
+          uploadTrigger="custom"
           showUploadList={false}
           onChange={handleUploadChange}
         >
-          <Button type="primary" icon={<IconPlus />} size="small">
+          <Button type="primary" theme="solid" icon={<IconPlus />} size="small">
             继续添加
           </Button>
         </Upload>
@@ -68,8 +69,8 @@ function DropZoneImpl({ compact, onAdd }: DropZoneProps) {
       className="compress-dropzone-upload"
       accept={IMAGE_ACCEPT}
       multiple
-      drag={!isMobile}
-      autoUpload={false}
+      draggable={!isMobile}
+      uploadTrigger="custom"
       showUploadList={false}
       onChange={handleUploadChange}
     >
@@ -77,6 +78,7 @@ function DropZoneImpl({ compact, onAdd }: DropZoneProps) {
         <Button
           className="compress-dropzone-mobile-trigger"
           type="primary"
+          theme="solid"
           size="large"
           icon={<IconUpload />}
         >
@@ -84,7 +86,7 @@ function DropZoneImpl({ compact, onAdd }: DropZoneProps) {
         </Button>
       ) : (
         <div className="compress-dropzone-hero">
-          <IconUpload className="compress-dropzone-hero-icon" />
+          <IconUpload className="compress-dropzone-hero-icon" size="extra-large" />
           <div className="compress-dropzone-hero-title">拖放图片到此处,或点击选择</div>
           <Typography.Text type="secondary">
             支持 JPG / PNG / WebP / GIF / AVIF,可一次多选

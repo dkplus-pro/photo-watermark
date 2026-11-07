@@ -1,6 +1,6 @@
-import { Alert, Button, Card, Space, Typography, Upload } from "@arco-design/web-react";
-import type { UploadProps } from "@arco-design/web-react";
-import { IconDelete, IconUpload } from "@arco-design/web-react/icon";
+import { IconDelete, IconUpload } from "@douyinfe/semi-icons";
+import { Banner, Button, Card, Space, Typography, Upload } from "@douyinfe/semi-ui";
+import type { UploadProps } from "@douyinfe/semi-ui/lib/es/upload";
 import { useMemoizedFn } from "ahooks";
 import { memo } from "react";
 import sumBy from "lodash/sumBy";
@@ -15,17 +15,17 @@ import "./components.css";
 /**
  * 照片选择器(阶段 11)。
  *
- * 为什么不是 arco `Upload` 直接搞定:`Upload` 的文件列表是它自己那套 `uid + status + percent`
+ * 为什么不是 Semi `Upload` 直接搞定:`Upload` 的文件列表是它自己那套 `uid + status + percent`
  * 的**上传中**模型,而本站没有上传——已选照片的唯一事实源是 `store/export` 的
  * `ExportFileEntry[]`(带 EXIF、源图尺寸、判重签名)。两套模型硬拼会出现「谁说了算」的分裂:
- * 删一张要同时改 store 和 arco 内部列表。所以这里只把 `Upload` 当**取文件的触发器**
+ * 删一张要同时改 store 和 Semi 内部列表。所以这里只把 `Upload` 当**取文件的触发器**
  * (它负责渲染那个 iOS 上唯一可靠的 `<input type="file" multiple>` 与拖拽事件),
  * 已选列表一律由本组件按 store 数据自绘。
  *
- * 判重与非图片拒收都已在 store 的 `addFiles` 里做完,本组件不重复判定;`accept.strict`
- * 显式关掉也是如此——开着严格模式时 arco 会按后缀把 `file.type` 为空的 heic 直接丢弃,
- * 而 D7 要求这种图**收进来**、在解码期作为单张失败呈现。关掉后原生 input 的
- * `accept="image/*"` 仍给桌面选图器做默认筛选,拖拽进来的则原样交给 store。
+ * 判重与非图片拒收都已在 store 的 `addFiles` 里做完,本组件不重复判定;accept 里显式追加
+ * `.heic/.heif` 也是同理——Semi 对 accept 做 JS 硬过滤,`file.type` 为空的 heic 过不了
+ * `image/*` 的 MIME 匹配,而 D7 要求这种图**收进来**、在解码期作为单张失败呈现。
+ * 原生 input 的 `accept` 仍给桌面选图器做默认筛选,拖拽进来的则原样交给 store。
  */
 
 export interface ImagePickerProps {
@@ -38,12 +38,13 @@ export interface ImagePickerProps {
   onClear(): void;
 }
 
-/** 传给 arco 的 accept 形状:对象形态才能同时带上 `strict: false`(理由见文件头注释)。 */
-const IMAGE_ACCEPT: UploadProps["accept"] = { type: "image/*", strict: false };
+/** 传给 Semi 的 accept:`image/*` 加 heic 扩展名,空 MIME 的 heic 才能过 JS 过滤(理由见文件头注释)。 */
+const IMAGE_ACCEPT: NonNullable<UploadProps["accept"]> = "image/*,.heic,.heif";
 
-/** arco 的 `UploadItem` 未从包根导出(`es/index.d.ts` 只 re-export 了 `UploadProps`),按 props 派生。 */
+/** Semi 的 `FileItem` 未从包根以类型名直接露出,按 props 派生。 */
 type UploadItem = NonNullable<UploadProps["fileList"]>[number];
 
+/** 桌面拖拽区的副文案(Semi 的 dragSubText)。 */
 const DRAGGER_TIP = "支持 jpg / png / webp / avif / heic,一次可多选";
 
 /** D19 的软提示文案:`{count}` 由 props 给,组件不写死张数。 */
@@ -116,9 +117,9 @@ const PhotoThumb = memo(function PhotoThumb({
               ? "image-picker-item-remove image-picker-item-remove--touch"
               : "image-picker-item-remove"
           }
-          shape="circle"
-          size="mini"
-          status="danger"
+          type="danger"
+          theme="solid"
+          size="small"
           icon={<IconDelete />}
           aria-label={`移除 ${entry.baseName}`}
           disabled={disabled}
@@ -147,53 +148,68 @@ export function ImagePicker({
   // 阈值本身由 props 给(页面传 store 的 MOBILE_SOFT_LIMIT),组件不写死张数。
   const showSoftLimitHint = isMobile && isOverSoftLimit(files.length, softLimit);
 
-  // arco 每选中一个文件回调一次(第二参即本次新增的那一个),多选因而是 N 次 onAdd:
+  // Semi 每选中一个文件回调一次(currentFile 即本次新增的那一个),多选因而是 N 次 onAdd:
   // store 的 addFiles 逐次追加并按签名判重,组件侧攒批只会多一处要测的状态。
-  const handleUploadChange = useMemoizedFn((_fileList: UploadItem[], file: UploadItem) => {
-    if (file.originFile) onAdd([file.originFile]);
+  const handleUploadChange = useMemoizedFn(({ currentFile }: { currentFile: UploadItem }) => {
+    if (currentFile?.fileInstance) onAdd([currentFile.fileInstance]);
   });
 
   return (
     <Card
       className={isMobile ? "image-picker image-picker--mobile" : "image-picker"}
       title="照片"
-      extra={
+      headerExtraContent={
         <Space>
           <Typography.Text type="secondary">
             已选 {files.length} 张 · {formatByteSize(totalBytes)}
           </Typography.Text>
-          <Button size="small" onClick={onClear} disabled={disabled || files.length === 0}>
+          <Button
+            size="small"
+            theme="light"
+            onClick={onClear}
+            disabled={disabled || files.length === 0}
+          >
             清空
           </Button>
         </Space>
       }
     >
       {showSoftLimitHint ? (
-        <Alert className="image-picker-hint" type="warning" content={softLimitHint(softLimit)} />
+        <Banner
+          className="image-picker-hint"
+          type="warning"
+          description={softLimitHint(softLimit)}
+        />
       ) : null}
 
       {/*
         触发区按端型切换(AGENTS.md 第 7 节:交互差异才用 hook,纯视觉差异走 @media):
-        - 桌面 `drag`:交给 arco 的拖拽区,它自带 tabIndex + aria-label,拖放与点击共用一个入口;
-        - 移动端 `drag={false}` + 自绘按钮:触屏没有「拖拽」这个动作,留着 arco 那句
+        - 桌面 `draggable`:交给 Semi 的拖拽区,它自带 tabIndex,拖放与点击共用一个入口;
+        - 移动端 `draggable={false}` + 自绘按钮:触屏没有「拖拽」这个动作,留着组件库那句
           「点击或拖拽文件到此处上传」既是误导也是英文站点腔;真 `<button>` 同时白拿
           焦点态与 ≥44px 触摸目标(样式见 components.css 的 .image-picker-trigger)。
         两种形态底下都是同一个 `<input type="file" accept="image/*" multiple>`,iOS 上这是
-        唯一可靠的选图入口。`autoUpload={false}` 且不给 `action`:arco 因此不建任何请求。
+        唯一可靠的选图入口。`uploadTrigger="custom"` 且不给 `action`:Semi 因此不建任何请求。
       */}
       <Upload
         className="image-picker-upload"
         accept={IMAGE_ACCEPT}
         multiple
-        drag={!isMobile}
-        tip={DRAGGER_TIP}
-        autoUpload={false}
+        draggable={!isMobile}
+        uploadTrigger="custom"
         showUploadList={false}
         disabled={disabled}
+        dragMainText="拖放照片到此处,或点击选择"
+        dragSubText={DRAGGER_TIP}
         onChange={handleUploadChange}
       >
         {isMobile ? (
-          <Button className="image-picker-trigger" type="primary" icon={<IconUpload />}>
+          <Button
+            className="image-picker-trigger"
+            type="primary"
+            theme="solid"
+            icon={<IconUpload />}
+          >
             选择照片
           </Button>
         ) : undefined}

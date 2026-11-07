@@ -1,4 +1,4 @@
-/* 导出页(阶段 13):颜色一律取 Arco CSS 变量(主题层 @arco-themes/react-juzi001),
+/* 导出页(阶段 13):颜色一律取 Semi 默认主题的 CSS 变量(--semi-color-*),
    不写死色值、不做暗色分支。列数差异由 hooks/use-responsive 给 span 决定,
    这里只做排布与窄屏适配,不再抄一份断点。 */
 
@@ -52,14 +52,13 @@
   gap: 8px;
   margin: auto 0 0;
   padding: 12px 16px;
-  /* background: var(--color-bg-2); */
   background: linear-gradient(
     90deg,
-    var(--color-secondary),
-    var(--color-bg-2),
-    var(--color-secondary)
+    var(--semi-color-fill-0),
+    var(--semi-color-bg-2),
+    var(--semi-color-fill-0)
   );
-  border-top: 1px solid var(--color-border-2);
+  border-top: 1px solid var(--semi-color-border);
 }
 
 @media (max-width: 767px) {
@@ -68,7 +67,7 @@
     justify-content: stretch;
   }
 
-  .export-actions .arco-btn {
+  .export-actions .semi-button {
     flex: 1;
     min-height: 44px;
   }
@@ -104,7 +103,7 @@
 
 .export-progress-failures-title {
   margin-bottom: 4px;
-  color: var(--color-text-2);
+  color: var(--semi-color-text-1);
   font-size: 13px;
 }
 
@@ -113,19 +112,19 @@
   margin: 0;
   padding: 0 12px;
   overflow-y: auto;
-  color: var(--color-text-1);
+  color: var(--semi-color-text-0);
   font-size: 13px;
   list-style: none;
-  background: var(--color-fill-1);
-  border: 1px solid var(--color-border-2);
-  border-radius: var(--border-radius-small);
+  background: var(--semi-color-fill-0);
+  border: 1px solid var(--semi-color-border);
+  border-radius: var(--semi-border-radius-small);
 }
 
 .export-progress-failure-item {
   display: flex;
   gap: 8px;
   padding: 6px 0;
-  border-bottom: 1px dashed var(--color-border-1);
+  border-bottom: 1px dashed var(--semi-color-border);
 }
 
 .export-progress-failure-item:last-child {
@@ -141,22 +140,23 @@
 
 .export-progress-failure-message {
   flex: 1 1 auto;
-  color: var(--color-text-3);
+  color: var(--semi-color-text-2);
   word-break: break-all;
 }
 
-/* 窄屏:弹框全宽 + 页脚按钮可换行且撑到 44px 触摸目标下限(AGENTS 第 7 节)。 */
-.export-progress-modal-wrap--mobile .arco-modal {
+/* 窄屏:弹框全宽 + 页脚按钮可换行且撑到 44px 触摸目标下限(AGENTS 第 7 节)。
+   Semi Modal 的 className 落在 .semi-modal 根元素上,直接用 --mobile 修饰类选择。 */
+.export-progress-modal--mobile {
   max-width: calc(100vw - 24px);
 }
 
-.export-progress-modal-wrap--mobile .arco-modal-footer {
+.export-progress-modal--mobile .semi-modal-footer {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.export-progress-modal-wrap--mobile .arco-modal-footer .arco-btn {
+.export-progress-modal--mobile .semi-modal-footer .semi-button {
   min-height: 44px;
   padding: 0 20px;
   font-size: 15px;

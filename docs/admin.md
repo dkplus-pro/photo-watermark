@@ -7,7 +7,7 @@
 
 两个功能全程不上传任何图片数据,部署目标是 GitHub Pages。
 
-技术栈:Modern.js(appTools,SPA)+ React 19 + TypeScript + Arco Design(芥子主题 3279)+ zustand + ahooks + lodash + Web Worker/OffscreenCanvas + exifr/piexifjs/fflate。
+技术栈:Modern.js(appTools,SPA)+ React 19 + TypeScript + Semi Design(默认主题)+ zustand + ahooks + lodash + Web Worker/OffscreenCanvas + exifr/piexifjs/fflate。
 
 约束规范(AI 与人共用)见 [../apps/admin/AGENTS.md](../apps/admin/AGENTS.md);方案与决策记录见 [watermark-frame-plan.md](watermark-frame-plan.md)。本文档是**人读的操作性指南**。
 
@@ -21,7 +21,7 @@ apps/admin/
     assets/{brand,logos,thumbs}/
     fonts/                Jost / Fira Sans 的 woff2 子集(Worker 内用 FontFace 加载)
   src/
-    utils/frame/          渲染引擎(本 app 的核心资产,禁止 import React/arco/store)
+    utils/frame/          渲染引擎(本 app 的核心资产,禁止 import React/semi/store)
       types.ts            渲染契约唯一事实源(冻结)
       frame-drawing.ts    相框绘制(纯比例几何,无 clamp)
       style-registry.ts   styleId → 绘制实现 的代码注册表
@@ -70,9 +70,9 @@ apps/admin/
 
 ## UI 规范
 
-- **组件优先级**:Arco Design 基础组件优先(`Card`/`Form`/`Select`/`Upload`/`Modal`/`Progress`/`Empty`/`Grid`),确实不满足再自定义;
-- **主题**:`arco.css` → `@arco-themes/react-juzi001/theme.css` → `src/routes/index.css`,顺序不可颠倒;颜色一律取 Arco CSS 变量,不写死色值;**不做暗色模式**;
-- **React 19 前置**:`src/routes/layout.tsx` 文件顶部(只允许注释行在前)必须 `import "@arco-design/web-react/es/_util/react-19-adapter"`,否则 `Message`/`Notification` 直接崩;
+- **组件优先级**:Semi Design 基础组件优先(`Card`/`Form`/`Select`/`Upload`/`Modal`/`Progress`/`Empty`/`Grid`),确实不满足再自定义(Semi 缺结果页,`src/components/result.tsx` 以 Empty + semi-illustrations 封装);
+- **主题**:Semi 默认主题(样式随组件按需自动引入,不手动引 css)→ `src/routes/index.css`;颜色一律取 Semi CSS 变量(`--semi-color-*`),不写死色值;**不做暗色模式**;
+- **React 19 前置**:`src/routes/layout.tsx` 文件顶部(只允许注释行在前)必须 `import "@douyinfe/semi-ui/react19-adapter"`,否则 `Toast`/弹层组件直接崩;
 - **无后台范式**:本站没有列表分页、查询表单、增删改与权限按钮,不要再引入 `AuthGate`/`use-table-query` 那套;
 - **移动端是一等公民**(< 768px):
   - 侧边栏 `Sider` 换成 `Drawer`(同一份菜单渲染,不留两份实例);

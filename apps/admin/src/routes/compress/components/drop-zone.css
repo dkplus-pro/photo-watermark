@@ -1,20 +1,20 @@
-/* drag 模式下 arco 把 className 挂在 dragger 自身(与 .arco-upload-drag 同一元素),
-   这里必须是复合选择器而不是后代选择器——写错层级整个框就消失。 */
-.compress-dropzone-upload.arco-upload-drag {
-  /* hero 拖拽区:大而明确的虚线框入口;arco 主题下 dragger 自身不带边框,必须整条画出。 */
+/* draggable 模式下 Semi 把 drag-area 渲染成 .semi-upload-drag-area(与 className 同挂
+   在 Upload 根元素之下),这里用后代选择器命中它——层级写错整个框就消失。 */
+.compress-dropzone-upload .semi-upload-drag-area {
+  /* hero 拖拽区:大而明确的虚线框入口;Semi 默认主题下拖拽区自身不带虚线边框,必须整条画出。 */
   padding: 56px 24px;
-  border: 1px dashed var(--color-border-3, var(--color-border-2));
+  border: 1px dashed var(--semi-color-border);
   border-radius: 4px;
-  background-color: var(--color-fill-1);
+  background-color: var(--semi-color-fill-0);
   transition:
     border-color 0.2s ease,
     background-color 0.2s ease;
 }
 
-/* hover/拖入态:边框转主题色,与 arco dragger 的悬停底色叠加形成明确的「可放下」反馈。 */
-.compress-dropzone-upload.arco-upload-drag:hover,
-.compress-dropzone-upload.arco-upload-drag.arco-upload-drag-hover {
-  border-color: rgb(var(--primary-6));
+/* hover/拖入态:边框转主题色,与 Semi 拖拽区的悬停底色叠加形成明确的「可放下」反馈。 */
+.compress-dropzone-upload .semi-upload-drag-area:hover,
+.compress-dropzone-upload .semi-upload-drag-area-legal {
+  border-color: var(--semi-color-primary);
 }
 
 .compress-dropzone-hero {
@@ -26,14 +26,13 @@
 }
 
 .compress-dropzone-hero-icon {
-  font-size: 40px;
-  color: rgb(var(--primary-6));
+  color: var(--semi-color-primary);
 }
 
 .compress-dropzone-hero-title {
   font-size: 16px;
   font-weight: 500;
-  color: var(--color-text-1);
+  color: var(--semi-color-text-0);
 }
 
 /* 触屏没有「拖拽」动作:移动端 hero 形态只给一个 ≥44px 的真实按钮。 */
@@ -47,7 +46,7 @@
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  border: 1px dashed var(--color-border-2);
+  border: 1px dashed var(--semi-color-border);
   border-radius: 4px;
 }
 

@@ -1,6 +1,8 @@
-import { Button, Result } from "@arco-design/web-react";
+import { Button } from "@douyinfe/semi-ui";
 import { useNavigate } from "@modern-js/runtime/router";
 import { Component, type ErrorInfo, type ReactNode } from "react";
+
+import Result from "./result";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -10,8 +12,8 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// 崩溃兜底卡片(Arco Result):错误摘要 + 重试(重置边界 state)+ 返回首页。
-// 样式全部走 Arco 组件,不写死颜色。
+// 崩溃兜底卡片(Semi Result):错误摘要 + 重试(重置边界 state)+ 返回首页。
+// 样式全部走 Semi 组件,不写死颜色。
 function ErrorFallback({ error, onRetry }: { error: Error; onRetry: () => void }) {
   const navigate = useNavigate();
 
@@ -21,11 +23,12 @@ function ErrorFallback({ error, onRetry }: { error: Error; onRetry: () => void }
       title="页面出错了"
       subTitle={error.message || "渲染时发生未知错误,请稍后重试"}
       extra={[
-        <Button key="retry" type="primary" onClick={onRetry}>
+        <Button key="retry" type="primary" theme="solid" onClick={onRetry}>
           重试
         </Button>,
         <Button
           key="home"
+          theme="light"
           onClick={() => {
             onRetry();
             navigate("/");

@@ -1,5 +1,5 @@
-/* 壳层样式:颜色一律取 Arco CSS 变量(主题覆盖层见 @arco-themes/react-juzi001),禁止写死色值。
-   纯视觉的端差异交给媒体查询,交互结构差异(Sider ↔ Drawer)才走 hooks/use-responsive。 */
+/* 壳层样式:颜色一律取 Semi 默认主题的 CSS 变量(--semi-color-*),禁止写死色值。
+   纯视觉的端差异交给媒体查询,交互结构差异(侧栏 ↔ SideSheet)才走 hooks/use-responsive。 */
 
 * {
   box-sizing: border-box;
@@ -16,10 +16,9 @@ body {
   margin: 0;
   /* iOS 横屏不自动放大字号,否则媒体查询断点会与实际渲染宽度错位。 */
   -webkit-text-size-adjust: 100%;
-  color: var(--color-text-1);
-  background: var(--color-bg-1);
+  color: var(--semi-color-text-0);
+  background: var(--semi-color-bg-0);
   font-family:
-    Inter,
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -28,9 +27,12 @@ body {
     sans-serif;
 }
 
-/* 壳层占满一屏,纵向滚动只发生在 .app-content:顶栏/侧栏/页脚始终可见。 */
+/* 壳层占满一屏,纵向滚动只发生在 .app-content:顶栏/侧栏/页脚始终可见。
+   侧栏是自绘 aside(见 layout.tsx),Semi 只在自家 Sider 子组件存在时才给壳层
+   加 has-sider 修饰类,横向排布要在这里自己声明。 */
 .app-shell {
   height: 100vh;
+  flex-direction: row;
 }
 
 .app-main {
@@ -39,9 +41,19 @@ body {
   overflow: hidden;
 }
 
+/* 侧栏是自绘容器(Semi 的 Layout.Sider 不支持受控折叠),宽度由折叠态类切换。 */
 .app-sider {
-  background: var(--color-bg-2);
-  border-right: 1px solid var(--color-border-2);
+  display: flex;
+  width: 220px;
+  flex-direction: column;
+  flex-shrink: 0;
+  background: var(--semi-color-bg-2);
+  border-right: 1px solid var(--semi-color-border);
+  transition: width 0.2s cubic-bezier(0.62, 0.05, 0.36, 0.95);
+}
+
+.app-sider-collapsed {
+  width: 60px;
 }
 
 .app-logo {
@@ -50,10 +62,10 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: var(--color-text-1);
+  color: var(--semi-color-text-0);
   font-size: 16px;
   font-weight: 700;
-  border-bottom: 1px solid var(--color-border-2);
+  border-bottom: 1px solid var(--semi-color-border);
   white-space: nowrap;
   overflow: hidden;
 }
@@ -65,7 +77,7 @@ body {
 }
 
 /* 侧栏收起后顶部只剩 logo 图:放大一档才撑得起 60px 窄栏,不至于缩成一个小点。 */
-.arco-layout-sider-collapsed .app-logo-img {
+.app-sider-collapsed .app-logo-img {
   width: 28px;
   height: 28px;
 }
@@ -77,13 +89,13 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--color-text-2);
-  border-bottom: 1px solid var(--color-border-2);
+  color: var(--semi-color-text-1);
+  border-bottom: 1px solid var(--semi-color-border);
 }
 
 .app-sider-trigger:hover {
-  background: var(--color-fill-2);
-  color: var(--color-text-1);
+  background: var(--semi-color-fill-1);
+  color: var(--semi-color-text-0);
 }
 
 .app-header {
@@ -92,8 +104,8 @@ body {
   align-items: center;
   height: 56px;
   padding: 0 24px;
-  background: var(--color-bg-2);
-  border-bottom: 1px solid var(--color-border-2);
+  background: var(--semi-color-bg-2);
+  border-bottom: 1px solid var(--semi-color-border);
 }
 
 /* 移动端导航汉堡按钮:点击区放大到 44px,满足触摸目标尺寸。 */
@@ -104,7 +116,7 @@ body {
   margin-left: -12px;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-1);
+  color: var(--semi-color-text-0);
   font-size: 18px;
   cursor: pointer;
 }
@@ -113,7 +125,7 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
-  background-color: var(--color-secondary);
+  background-color: var(--semi-color-fill-0);
 }
 
 /* PageContainer 根(UI 规范见 docs/admin.md):撑满内容区高度,
@@ -149,8 +161,8 @@ body {
   z-index: 5;
   margin-top: 16px;
   padding: 12px 24px;
-  background: var(--color-bg-2);
-  border-top: 1px solid var(--color-border-2);
+  background: var(--semi-color-bg-2);
+  border-top: 1px solid var(--semi-color-border);
   text-align: center;
 }
 
@@ -158,7 +170,7 @@ body {
 .app-footer {
   flex-shrink: 0;
   padding: 12px 24px 24px;
-  color: var(--color-text-3);
+  color: var(--semi-color-text-2);
   font-size: 14px;
   text-align: center;
   background: transparent;
@@ -176,8 +188,8 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--color-bg-2);
-  color: var(--color-text-2);
+  background: var(--semi-color-bg-2);
+  color: var(--semi-color-text-1);
   font-size: 20px;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -185,7 +197,7 @@ body {
 }
 
 .author-qrcode-float:hover {
-  color: rgb(var(--primary-6));
+  color: var(--semi-color-primary);
 }
 
 .author-qrcode-img {
@@ -194,8 +206,8 @@ body {
   height: auto;
 }
 
-/* 移动 Drawer 承载导航:菜单贴边,滚动交给抽屉内容区。 */
-.app-nav-drawer .arco-drawer-body {
+/* 移动 SideSheet 承载导航:菜单贴边,滚动交给抽屉内容区。 */
+.app-nav-drawer .semi-sidesheet-body {
   padding: 0;
   overflow-y: auto;
 }

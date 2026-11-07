@@ -14,8 +14,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@arco-design/web-react": "^2.66.16",
-    "@arco-themes/react-juzi001": "^0.0.1",
+    "@douyinfe/semi-icons": "^2.104.0",
+    "@douyinfe/semi-illustrations": "^2.104.0",
+    "@douyinfe/semi-ui": "^2.104.0",
     "@modern-js/runtime": "^3.5.0",
     "aegis-web-sdk": "^1.41.15",
     "ahooks": "^3.9.7",

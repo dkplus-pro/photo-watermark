@@ -1,6 +1,19 @@
 packages:
   - apps/*
   - packages/*
+# Semi 发布包漏声明 @types/react peer:不补上时,semi 的 d.ts 会经 pnpm 的隐藏提升位
+# 解析到仓库里 React 18(miniapp)的 @types/react 副本,与 admin/site 等React 19 端
+# typecheck 冲突。补 peer 后每个 semi 包按消费方自己的 @types/react 解析。
+packageExtensions:
+  "@douyinfe/semi-ui":
+    peerDependencies:
+      "@types/react": "*"
+  "@douyinfe/semi-foundation":
+    peerDependencies:
+      "@types/react": "*"
+  "@douyinfe/semi-icons":
+    peerDependencies:
+      "@types/react": "*"
 allowBuilds:
   "@parcel/watcher": true
   "@swc/core": true

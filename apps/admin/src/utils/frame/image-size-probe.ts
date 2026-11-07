@@ -14,7 +14,7 @@ import type { OutputSize } from "./types";
  * 双解码的代价就是那份约 96MB 的临时位图,所以触发条件必须窄,且由用例锁住
  * (tests/utils/frame/export-pipeline.test.ts 的「探测失败走二次解码」)。
  *
- * 依赖纪律:本文件不 import store/routes/hooks/react/arco,唯一外部依赖是 render-core 的解码器,
+ * 依赖纪律:本文件不 import store/routes/hooks/react/semi,唯一外部依赖是 render-core 的解码器,
  * 纯字节解析部分(`probeSizeFromHead`)可以在 node 里直接喂合成数据测。
  */
 

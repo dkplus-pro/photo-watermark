@@ -1,4 +1,5 @@
-import { Alert, Button, Empty, Grid, Typography } from "@arco-design/web-react";
+import { Banner, Button, Col, Empty, Row, Typography } from "@douyinfe/semi-ui";
+import { IllustrationNoContent } from "@douyinfe/semi-illustrations";
 import type { ReactNode } from "react";
 
 import PageContainer from "../../components/page-container";
@@ -9,10 +10,8 @@ import FrameCard, { FrameCardPlaceholder } from "./components/frame-card";
 
 import "./index.css";
 
-const { Row, Col } = Grid;
-
-// arco 栅格总列数,span 换算用。
-const ARCO_GRID_COLUMNS = 24;
+// 栅格总列数,span 换算用。
+const GRID_COLUMNS = 24;
 
 // 列数口径:桌面 4 / 平板 3 / 手机单列。
 // 这里存 span(24 栅格)而不是列数,渲染时不必每处再除一次。
@@ -57,11 +56,12 @@ function PageBody({ error, loading, frames, viewport, onRetry }: PageBodyProps) 
 
   if (error) {
     return (
-      <Alert
+      // Semi 的 Alert 叫 Banner:无 action 插槽,重试按钮走 children(渲染在描述下方)。
+      <Banner
         className="frames-error"
-        type="error"
+        type="danger"
         title="相框清单装载失败"
-        content={
+        description={
           // 装载错误本身就是人话(见 utils/catalog 的 CatalogError),原样展出,不再二次拼接句子。
           <>
             <div>{error}</div>
@@ -70,19 +70,18 @@ function PageBody({ error, loading, frames, viewport, onRetry }: PageBodyProps) 
             </div>
           </>
         }
-        action={
-          <Button type="primary" size="small" onClick={() => void onRetry()}>
-            重试
-          </Button>
-        }
-      />
+      >
+        <Button type="primary" theme="solid" size="small" onClick={() => void onRetry()}>
+          重试
+        </Button>
+      </Banner>
     );
   }
 
   if (loading) {
     // 占位卡按当前列数铺满一行:只放一个 spinner 会在清单到位时整版跳动。
     const placeholderCells: ReactNode[] = [];
-    for (let index = 0; index < ARCO_GRID_COLUMNS / colSpan; index += 1) {
+    for (let index = 0; index < GRID_COLUMNS / colSpan; index += 1) {
       placeholderCells.push(
         <Col key={`placeholder-${index}`} span={colSpan}>
           <FrameCardPlaceholder />
@@ -100,6 +99,7 @@ function PageBody({ error, loading, frames, viewport, onRetry }: PageBodyProps) 
     return (
       <Empty
         className="frames-empty"
+        image={<IllustrationNoContent style={{ width: 120, height: 120 }} />}
         description={
           <div>
             <div>暂无可用相框</div>

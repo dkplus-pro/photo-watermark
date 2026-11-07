@@ -67,8 +67,8 @@ function makeEntries(count: number): FrameCatalogEntry[] {
 
 /** arco Col 的 span 落在类名上(arco-col-6 / -8 / -12),用它断言列数。 */
 function spansOfCells(container: HTMLElement): string[] {
-  return Array.from(container.querySelectorAll(".arco-col")).map(
-    (cell) => cell.className.match(/arco-col-(\d+)/u)?.[1] ?? ""
+  return Array.from(container.querySelectorAll(".semi-col")).map(
+    (cell) => cell.className.match(/semi-col-(\d+)/u)?.[1] ?? ""
   );
 }
 
@@ -201,7 +201,7 @@ describe("装载状态", () => {
     catalogMock.frames = [];
     const { container } = render(<FramesListPage />);
 
-    expect(container.querySelector(".arco-skeleton")).not.toBeNull();
+    expect(container.querySelector(".semi-skeleton")).not.toBeNull();
     expect(container.querySelectorAll(".frame-card")).toHaveLength(0);
     expect(screen.queryByText("暂无可用相框")).not.toBeInTheDocument();
   });
@@ -219,7 +219,7 @@ describe("装载状态", () => {
     catalogMock.error = "frames.json 请求失败";
     const { container } = render(<FramesListPage />);
 
-    expect(container.querySelector(".arco-alert-error")).not.toBeNull();
+    expect(container.querySelector(".semi-banner-danger")).not.toBeNull();
     expect(screen.getByText(/清单装载失败/u)).toBeInTheDocument();
     // 原始装载错误要原样露出,不能糊成一句「出错了」。
     expect(screen.getByText("frames.json 请求失败")).toBeInTheDocument();
@@ -234,7 +234,7 @@ describe("装载状态", () => {
     catalogMock.error = "frames.json 请求失败";
     const { container } = render(<FramesListPage />);
 
-    expect(container.querySelector(".arco-alert-error")).not.toBeNull();
-    expect(container.querySelector(".arco-skeleton")).toBeNull();
+    expect(container.querySelector(".semi-banner-danger")).not.toBeNull();
+    expect(container.querySelector(".semi-skeleton")).toBeNull();
   });
 });
