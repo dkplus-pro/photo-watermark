@@ -27,7 +27,8 @@ afterEach(cleanup);
 const at = (appPathname: string) => `${APP_BASENAME === "/" ? "" : APP_BASENAME}${appPathname}`;
 
 function textOf(container: HTMLElement): string {
-  return container.querySelector(".app-page-breadcrumb")?.textContent ?? "";
+  // Semi 的 Breadcrumb 会把 `/` 分隔符作为真实文本渲染进容器,拼接断言前把它剥掉。
+  return (container.querySelector(".app-page-breadcrumb")?.textContent ?? "").replace(/\//g, "");
 }
 
 describe("自动面包屑", () => {
@@ -152,7 +153,7 @@ describe("breadcrumb 显式传入", () => {
       </PageContainer>
     );
 
-    expect(container.querySelectorAll(".app-page-breadcrumb .arco-breadcrumb-item")).toHaveLength(
+    expect(container.querySelectorAll(".app-page-breadcrumb .semi-breadcrumb-item")).toHaveLength(
       1
     );
   });

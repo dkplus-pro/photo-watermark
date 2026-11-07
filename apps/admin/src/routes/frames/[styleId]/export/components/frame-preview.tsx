@@ -1,5 +1,6 @@
-import { Alert, Button, Card, Empty, Skeleton, Spin, Typography } from "@arco-design/web-react";
-import { IconRefresh } from "@arco-design/web-react/icon";
+import { IconRefresh } from "@douyinfe/semi-icons";
+import { Banner, Button, Card, Empty, Skeleton, Spin, Typography } from "@douyinfe/semi-ui";
+import { IllustrationNoContent } from "@douyinfe/semi-illustrations";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { useEffect, useRef, useState } from "react";
 
@@ -13,7 +14,7 @@ import "./components.css";
 /**
  * 相框实时预览(阶段 11)。
  *
- * 为什么必须自建:arco 没有任何组件能「吃一个 File + 一份绘制参数 → 出一张画好的图」。
+ * 为什么必须自建:Semi 没有任何组件能「吃一个 File + 一份绘制参数 → 出一张画好的图」。
  * 本组件因此只做四件事,绘制策略一律留在 `utils/frame/preview-render`(D18 的 1200px 长边
  * 只在那一处生效):
  * 1. 参数变化时**防抖**地发起一次主线程渲染(选图器多选、连续换 logo 都会连击);
@@ -130,28 +131,38 @@ export function FramePreview({
     <Card
       className="frame-preview"
       title="效果预览"
-      extra={
+      headerExtraContent={
         <Typography.Text type="secondary">
           预览恒按长边 {String(PREVIEW_LONG_EDGE)}px 渲染, 与所选导出档位无关
         </Typography.Text>
       }
     >
       {!hasSource ? (
-        <Empty className="frame-preview-empty" description="选择照片后即可看到相框效果" />
+        <Empty
+          className="frame-preview-empty"
+          image={<IllustrationNoContent style={{ width: 120, height: 120 }} />}
+          description="选择照片后即可看到相框效果"
+        />
       ) : null}
 
       {hasSource && state.error ? (
-        <Alert
+        // Semi 的 Alert 叫 Banner:无 action 插槽,重试按钮走 children(渲染在描述下方)。
+        <Banner
           className="frame-preview-error"
-          type="error"
+          type="danger"
           title="预览生成失败"
-          content={state.error}
-          action={
-            <Button size="small" icon={<IconRefresh />} disabled={disabled} onClick={drawNow}>
-              重试
-            </Button>
-          }
-        />
+          description={state.error}
+        >
+          <Button
+            size="small"
+            theme="light"
+            icon={<IconRefresh />}
+            disabled={disabled}
+            onClick={drawNow}
+          >
+            重试
+          </Button>
+        </Banner>
       ) : null}
 
       {hasSource && !state.error && previewUrl ? (
@@ -160,7 +171,11 @@ export function FramePreview({
 
       {hasSource && !state.error && !previewUrl ? (
         <div className="frame-preview-skeleton">
-          {state.rendering ? <Spin loading /> : <Skeleton text={{ rows: 1 }} image={false} />}
+          {state.rendering ? (
+            <Spin loading />
+          ) : (
+            <Skeleton loading placeholder={<Skeleton.Paragraph rows={1} />} />
+          )}
         </div>
       ) : null}
     </Card>

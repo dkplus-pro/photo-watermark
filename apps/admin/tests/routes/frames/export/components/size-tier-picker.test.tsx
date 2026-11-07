@@ -27,7 +27,7 @@ const optionText = (tier: SizeTierKey): string =>
   `${SIZE_TIERS[tier].label}${SIZE_TIERS[tier].hint}`;
 
 const buttonLabels = (container: HTMLElement): string[] =>
-  Array.from(container.querySelectorAll(".arco-radio-button")).map(
+  Array.from(container.querySelectorAll(".semi-radio-buttonRadioGroup")).map(
     (node) => node.textContent ?? ""
   );
 
@@ -42,7 +42,7 @@ describe("档位渲染", () => {
 
   test("当前档位以 checked 呈现;顺序跟随 SIZE_TIER_KEYS(不按体积重排,保持「原图/中/小」读法)", () => {
     const { container } = render(<SizeTierPicker {...makeProps("small")} />);
-    const checked = container.querySelectorAll(".arco-radio-checked");
+    const checked = container.querySelectorAll(".semi-radio-checked");
 
     expect(checked).toHaveLength(1);
     expect(checked[0].textContent).toBe(optionText("small"));
@@ -60,11 +60,11 @@ describe("选择档位", () => {
     expect(props.onChange).toHaveBeenCalledWith("original");
   });
 
-  test("点已选中的档位不回调(arco 原生语义,页面因此少一次等价 setState)", async () => {
+  test("点已选中的档位不回调(Semi 原生语义,页面因此少一次等价 setState)", async () => {
     const props = makeProps("medium");
     const { container } = render(<SizeTierPicker {...props} />);
 
-    await userEvent.click(container.querySelectorAll(".arco-radio-button input")[1]);
+    await userEvent.click(container.querySelectorAll(".semi-radio-buttonRadioGroup input")[1]);
     expect(props.onChange).not.toHaveBeenCalled();
   });
 
@@ -72,21 +72,21 @@ describe("选择档位", () => {
     const { container } = render(<SizeTierPicker {...makeProps("ultra-4k" as SizeTierKey)} />);
 
     expect(buttonLabels(container)).toHaveLength(SIZE_TIER_KEYS.length);
-    expect(container.querySelectorAll(".arco-radio-checked")).toHaveLength(0);
+    expect(container.querySelectorAll(".semi-radio-checked")).toHaveLength(0);
   });
 
   test("空值:value 为空串时三档仍在且无选中项", () => {
     const { container } = render(<SizeTierPicker {...makeProps("" as SizeTierKey)} />);
 
     expect(buttonLabels(container)).toHaveLength(SIZE_TIER_KEYS.length);
-    expect(container.querySelectorAll(".arco-radio-checked")).toHaveLength(0);
+    expect(container.querySelectorAll(".semi-radio-checked")).toHaveLength(0);
   });
 
   test("非法状态迁移:disabled 时点击不产生 onChange", async () => {
     const props = { ...makeProps("medium"), disabled: true };
     const { container } = render(<SizeTierPicker {...props} />);
 
-    await userEvent.click(container.querySelectorAll(".arco-radio-button input")[2]);
+    await userEvent.click(container.querySelectorAll(".semi-radio-buttonRadioGroup input")[2]);
     expect(props.onChange).not.toHaveBeenCalled();
   });
 });

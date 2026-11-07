@@ -1,5 +1,5 @@
-import { Button, Typography } from "@arco-design/web-react";
-import { IconDelete, IconDownload } from "@arco-design/web-react/icon";
+import { IconDelete, IconDownload } from "@douyinfe/semi-icons";
+import { Button, Typography } from "@douyinfe/semi-ui";
 import { memo } from "react";
 
 import { formatByteSize } from "../../../utils/file-name";
@@ -52,6 +52,7 @@ function SummaryBarImpl({
       <div className="compress-actions-buttons">
         <Button
           type="primary"
+          theme="solid"
           icon={<IconDownload />}
           loading={packing}
           disabled={doneCount === 0}
@@ -59,7 +60,7 @@ function SummaryBarImpl({
         >
           打包下载 ZIP
         </Button>
-        <Button status="danger" icon={<IconDelete />} onClick={onClear}>
+        <Button type="danger" theme="light" icon={<IconDelete />} onClick={onClear}>
           清空
         </Button>
       </div>

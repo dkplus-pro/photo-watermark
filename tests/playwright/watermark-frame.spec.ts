@@ -82,7 +82,10 @@ async function runExportGoldenPath(page: Page): Promise<void> {
   // 样式名回显:确认落地的是清单里的某一款,而不是 404 守卫页。
   await expect(page.getByText("相框样式:", { exact: false })).toBeVisible();
 
-  const photoInput = page.locator('.image-picker-upload input[type="file"]');
+  // Semi 的 Upload 渲染主 input 与「替换」用 input 两个隐藏 file input,取主那个。
+  const photoInput = page.locator(
+    ".image-picker-upload input.semi-upload-hidden-input:not(.semi-upload-hidden-input-replace)"
+  );
   await photoInput.setInputFiles(await createTestPhoto(page));
   await expect(page.getByText("已选 1 张", { exact: false })).toBeVisible();
   // 列表项展示的是消毒后的主名(不含扩展名)。
@@ -90,7 +93,9 @@ async function runExportGoldenPath(page: Page): Promise<void> {
 
   // 下载由流水线末尾的 anchor.click() 触发,事件必须在点击前挂上。
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "导出", exact: true }).click();
+  // Semi 的图标自带 aria-label(下载图标为 "download"),可及名是 "download导出",
+  // 用尾部锚定匹配; exporting 前文档里没有别的以「导出」结尾的按钮。
+  await page.getByRole("button", { name: /导出$/u }).click();
 
   await expect(page.getByText("导出完成", { exact: false })).toBeVisible({ timeout: 60_000 });
   const download = await downloadPromise;

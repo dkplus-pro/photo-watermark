@@ -1,5 +1,5 @@
-import { Breadcrumb } from "@arco-design/web-react";
 import { useLocation, useNavigate } from "@modern-js/runtime/router";
+import { Breadcrumb } from "@douyinfe/semi-ui";
 import type { ReactNode } from "react";
 
 import { matchMenuTrail, type MenuConfig, sidebarMenus } from "../config/menu";

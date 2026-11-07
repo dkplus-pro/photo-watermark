@@ -1,5 +1,5 @@
-import { Message } from "@arco-design/web-react";
 import { useMemoizedFn } from "ahooks";
+import { Toast } from "@douyinfe/semi-ui";
 import { useState } from "react";
 
 import { COMPRESS_ZIP_PREFIX } from "../../constants";
@@ -47,7 +47,7 @@ export function useCompressDownload() {
       // writer 在异常路径上丢弃已累积分片,与导出流水线同一纪律。
       writer.discard();
       const reason = cause instanceof Error ? cause.message : String(cause);
-      Message.error(`${PACK_FAILURE_PREFIX}: ${reason}`);
+      Toast.error(`${PACK_FAILURE_PREFIX}: ${reason}`);
     } finally {
       setPacking(false);
     }

@@ -1,11 +1,12 @@
-import { Alert, Button, Grid, Result, Skeleton, Space, Typography } from "@arco-design/web-react";
-import type { BreadcrumbItem } from "../../../../components/page-container";
-import { IconDownload, IconRefresh } from "@arco-design/web-react/icon";
+import { IconDownload, IconRefresh } from "@douyinfe/semi-icons";
+import { Banner, Button, Col, Row, Skeleton, Space, Typography } from "@douyinfe/semi-ui";
 import { useNavigate, useParams } from "@modern-js/runtime/router";
 import { useMemoizedFn } from "ahooks";
 import { useEffect, useMemo } from "react";
 
 import PageContainer from "../../../../components/page-container";
+import type { BreadcrumbItem } from "../../../../components/page-container";
+import Result from "../../../../components/result";
 import { useFrameCatalog } from "../../../../hooks/use-frame-catalog";
 import { useIsMobile } from "../../../../hooks/use-responsive";
 import { MOBILE_SOFT_LIMIT, useExportStore } from "../../../../store/export";
@@ -22,10 +23,8 @@ import { resolveStyleGuard } from "./style-guard";
 
 import "./index.css";
 
-const { Row, Col } = Grid;
-
-// arco 栅格总列数,span 换算用(与相框列表同一口径)。
-const ARCO_GRID_COLUMNS = 24;
+// 栅格总列数,span 换算用(与相框列表同一口径)。
+const GRID_COLUMNS = 24;
 
 /**
  * 导出页(阶段 13)——只做装配:样式守卫 → 表单四件套 + 实时预览 → 导出流程 → 进度弹框。
@@ -58,10 +57,12 @@ function CatalogErrorGate({ onBack, onRetry, message }: GateProps & { message: s
       subTitle={message}
       extra={
         <Space>
-          <Button type="primary" onClick={onRetry}>
+          <Button type="primary" theme="solid" onClick={onRetry}>
             重试
           </Button>
-          <Button onClick={onBack}>{BACK_TO_LIST_LABEL}</Button>
+          <Button theme="light" onClick={onBack}>
+            {BACK_TO_LIST_LABEL}
+          </Button>
         </Space>
       }
     />
@@ -80,7 +81,7 @@ function UnknownStyleGate({ onBack, message }: GateProps & { message: string }) 
       title="样式不存在"
       subTitle={message}
       extra={
-        <Button type="primary" onClick={onBack}>
+        <Button type="primary" theme="solid" onClick={onBack}>
           {BACK_TO_LIST_LABEL}
         </Button>
       }
@@ -132,9 +133,9 @@ export default function FrameExportPage() {
 
   const isMobile = useIsMobile();
   // 两栏模式(桌面/平板)统一预览与表单各占一半;移动端单列且预览排在表单之后(JSX 顺序即视觉顺序)。
-  const formSpan = isMobile ? ARCO_GRID_COLUMNS : ARCO_GRID_COLUMNS / 2;
-  // 单列时预览仍要占满 24:反算出的 span 0 会被 arco 的 `.arco-col-0{display:none}` 整块藏掉。
-  const previewSpan = isMobile ? ARCO_GRID_COLUMNS : ARCO_GRID_COLUMNS - formSpan;
+  const formSpan = isMobile ? GRID_COLUMNS : GRID_COLUMNS / 2;
+  // 单列时预览仍要占满 24:反算出的 span 0 会被栅格的 `.semi-col-0{display:none}` 整块藏掉。
+  const previewSpan = isMobile ? GRID_COLUMNS : GRID_COLUMNS - formSpan;
 
   const goToList = useMemoizedFn(() => navigate("/frames"));
   const handleStart = useMemoizedFn(() => {
@@ -152,7 +153,9 @@ export default function FrameExportPage() {
 
   const renderBody = () => {
     if (guard.kind === "loading") {
-      return <Skeleton className="export-gate" text={{ rows: 6 }} />;
+      return (
+        <Skeleton className="export-gate" loading placeholder={<Skeleton.Paragraph rows={6} />} />
+      );
     }
     if (guard.kind === "catalogError") {
       return <CatalogErrorGate message={guard.message} onBack={goToList} onRetry={handleRetry} />;
@@ -165,20 +168,20 @@ export default function FrameExportPage() {
         <Col span={formSpan}>
           <div className="export-form">
             {flow.noFilesHint ? (
-              <Alert
+              <Banner
                 className="export-hint"
                 type="warning"
                 title="还没有选择图片"
-                content="请先在下面添加至少一张要导出的照片, 再点底部「导出」。"
+                description="请先在下面添加至少一张要导出的照片, 再点底部「导出」。"
               />
             ) : null}
             {isMobile && files.length > MOBILE_SOFT_LIMIT ? (
               // D19:软提示,不拦人 —— 文案必须明说「可以继续」,否则用户会以为这是报错。
-              <Alert
+              <Banner
                 className="export-hint"
                 type="warning"
                 title="移动端批量导出提示"
-                content={`已选 ${String(files.length)} 张。移动端一次导出 ${String(
+                description={`已选 ${String(files.length)} 张。移动端一次导出 ${String(
                   MOBILE_SOFT_LIMIT
                 )} 张以上会较慢且占内存, 建议改用「小」档或分批导出; 也可以继续导出。`}
               />
@@ -233,6 +236,7 @@ export default function FrameExportPage() {
       <div className="export-actions">
         <Button
           type="primary"
+          theme="solid"
           icon={<IconDownload />}
           loading={flow.exporting}
           disabled={readyStyleId === null}
@@ -240,7 +244,12 @@ export default function FrameExportPage() {
         >
           导出
         </Button>
-        <Button icon={<IconRefresh />} disabled={flow.exporting} onClick={flow.resetForm}>
+        <Button
+          theme="light"
+          icon={<IconRefresh />}
+          disabled={flow.exporting}
+          onClick={flow.resetForm}
+        >
           重置
         </Button>
       </div>

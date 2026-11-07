@@ -1,10 +1,9 @@
+import { IconApps, IconColorPalette, IconShrink } from "@douyinfe/semi-icons";
 import type { ReactNode } from "react";
 
-import { IconApps, IconPalette, IconShrink } from "@arco-design/web-react/icon";
-
 // 静态菜单声明:本站无服务端、无鉴权,菜单即路由全集,不做任何运行期裁剪。
-// 带 children 的节点只作 SubMenu 的 key(如 /watermark-frame),本身不对应路由,无需为其建页面。
-// 图标取 @arco-design/web-react/icon 实际导出;折叠态仅显示图标(UI 规范见 docs/admin.md)。
+// 带 children 的节点只作目录的 itemKey(如 /watermark-frame),本身不对应路由,无需为其建页面。
+// 图标取 @douyinfe/semi-icons 实际导出;折叠态仅显示图标(UI 规范见 docs/admin.md)。
 export interface MenuConfig {
   path: string;
   title: string;
@@ -17,7 +16,7 @@ export const sidebarMenus: MenuConfig[] = [
   {
     path: "/watermark-frame",
     title: "水印相框",
-    icon: <IconPalette />,
+    icon: <IconColorPalette />,
     children: [{ path: "/frames", title: "相框列表", icon: <IconApps /> }]
   },
   {

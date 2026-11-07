@@ -1,4 +1,5 @@
-import { Alert, Button, Modal, Progress, Result, Space, Typography } from "@arco-design/web-react";
+import { Banner, Button, Modal, Progress, Space, Typography } from "@douyinfe/semi-ui";
+import Result from "../../../../../components/result";
 import { useIsMobile } from "../../../../../hooks/use-responsive";
 import { MOBILE_SOFT_LIMIT } from "../../../../../store/export";
 import type { ExportStatus } from "../../../../../store/export";
@@ -13,7 +14,7 @@ import "../index.css";
  * 不订阅 store、不碰流水线。这样取消/失败/迟到回报这些时序问题都归到页面一处去测。
  *
  * 两条硬口径:
- * - **exporting 期间不可逃避**:`maskClosable`/`escToExit`/`closable` 全关,唯一出口是「取消导出」。
+ * - **exporting 期间不可逃避**:`maskClosable`/`closeOnEsc`/`closable` 全关,唯一出口是「取消导出」。
  *   跑着几十张任务的流水线被一次误点遮罩关掉,用户就再也看不到进度和失败列表了。
  * - **失败逐条列**(D7):只显示「失败 3 张」等于没告诉用户该重跑哪三张。列表自身滚动,
  *   不给条数上限。
@@ -95,15 +96,15 @@ export default function ExportProgressModal({
     if (status === "exporting") {
       return (
         <div className="export-progress-body">
-          <Progress percent={percent} status="normal" />
+          <Progress percent={percent} showInfo />
           <Typography.Text className="export-progress-counter">{`已完成 ${String(
             done
           )}/${String(total)} 张, 失败 ${String(failedCount)} 张`}</Typography.Text>
           {softLimitNotice ? (
             // D19:移动端大批量只提醒、不拦人,所以这里没有按钮,只是一段说明。
-            <Alert
+            <Banner
               type="warning"
-              content={`移动端一次导出 ${String(
+              description={`移动端一次导出 ${String(
                 MOBILE_SOFT_LIMIT
               )} 张以上会较慢且占内存, 建议改用「小」档或分批导出。`}
             />
@@ -144,7 +145,7 @@ export default function ExportProgressModal({
   const renderFooter = () => {
     if (status === "exporting") {
       return (
-        <Button type="outline" status="danger" onClick={onCancelExport}>
+        <Button type="danger" theme="outline" onClick={onCancelExport}>
           取消导出
         </Button>
       );
@@ -152,16 +153,18 @@ export default function ExportProgressModal({
     if (status === "done") {
       return (
         <Space>
-          <Button type="primary" disabled={!canRedownload} onClick={onRedownload}>
+          <Button type="primary" theme="solid" disabled={!canRedownload} onClick={onRedownload}>
             重新下载
           </Button>
-          <Button onClick={onDismiss}>关闭</Button>
+          <Button theme="light" onClick={onDismiss}>
+            关闭
+          </Button>
         </Space>
       );
     }
     if (status === "failed") {
       return (
-        <Button type="primary" onClick={onDismiss}>
+        <Button type="primary" theme="solid" onClick={onDismiss}>
           关闭
         </Button>
       );
@@ -170,18 +173,18 @@ export default function ExportProgressModal({
   };
 
   return (
+    // Semi 的 className 直接落在 .semi-modal 根元素上,
+    // 移动端差异用 --mobile 修饰类 + css 里的后代选择器表达。
     <Modal
-      className="export-progress-modal"
-      wrapClassName={isMobile ? "export-progress-modal-wrap--mobile" : undefined}
+      className={`export-progress-modal${isMobile ? " export-progress-modal--mobile" : ""}`}
       title="导出进度"
       visible={visible}
       style={isMobile ? MOBILE_MODAL_STYLE : DESKTOP_MODAL_STYLE}
       maskClosable={!locked}
-      escToExit={!locked}
+      closeOnEsc={!locked}
       closable={!locked}
       footer={renderFooter()}
       onCancel={locked ? onCancelExport : onDismiss}
-      unmountOnExit={true}
     >
       {renderBody()}
       {/* 失败列表在 done/failed 也要在:整批失败时它解释原因,部分成功时它说明哪几张没进包。 */}

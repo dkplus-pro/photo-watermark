@@ -20,11 +20,11 @@
   padding: 12px 16px;
   background: linear-gradient(
     90deg,
-    var(--color-secondary),
-    var(--color-bg-2),
-    var(--color-secondary)
+    var(--semi-color-fill-0),
+    var(--semi-color-bg-2),
+    var(--semi-color-fill-0)
   );
-  border-top: 1px solid var(--color-border-2);
+  border-top: 1px solid var(--semi-color-border);
 }
 
 .compress-actions-summary {
@@ -53,7 +53,7 @@
   }
 
   /* 移动端两个按钮平铺整行并抬到 44px 触摸目标(AGENTS 第 7 节)。 */
-  .compress-actions-buttons .arco-btn {
+  .compress-actions-buttons .semi-button {
     flex: 1;
     min-height: 44px;
   }

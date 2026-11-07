@@ -1,5 +1,5 @@
-import { Button, Tag, Typography } from "@arco-design/web-react";
-import { IconDelete, IconDownload, IconLoading } from "@arco-design/web-react/icon";
+import { IconDelete, IconDownload, IconSpin } from "@douyinfe/semi-icons";
+import { Button, Tag, Typography } from "@douyinfe/semi-ui";
 import { useMemoizedFn } from "ahooks";
 import { memo } from "react";
 
@@ -42,12 +42,12 @@ const sourceMetaOf = (entry: CompressFileEntry): string => {
 
 function StatusArea({ entry }: { entry: CompressFileEntry }) {
   if (entry.status === "queued") {
-    return <Tag color="gray">排队中</Tag>;
+    return <Tag color="grey">排队中</Tag>;
   }
   if (entry.status === "working") {
     return (
       <span className="compress-row-working">
-        <IconLoading spin />
+        <IconSpin spin />
         <span>压缩中</span>
       </span>
     );
@@ -67,7 +67,7 @@ function StatusArea({ entry }: { entry: CompressFileEntry }) {
     );
   }
   const result = entry.result;
-  if (!result) return <Tag color="gray">排队中</Tag>;
+  if (!result) return <Tag color="grey">排队中</Tag>;
   const saving = savingsLabelOf(entry.size, result.size);
   return (
     <span className="compress-row-result">
@@ -78,7 +78,7 @@ function StatusArea({ entry }: { entry: CompressFileEntry }) {
       {saving && saving !== "未减小" ? (
         <Tag color="green">{saving}</Tag>
       ) : (
-        <Tag color="gray">{saving ?? SIZE_UNAVAILABLE}</Tag>
+        <Tag color="grey">{saving ?? SIZE_UNAVAILABLE}</Tag>
       )}
     </span>
   );
@@ -118,6 +118,7 @@ const ResultRow = memo(function ResultRow({
         {entry.result ? (
           <Button
             type="primary"
+            theme="solid"
             size="small"
             icon={<IconDownload />}
             aria-label={`下载 ${entry.baseName}`}
@@ -128,8 +129,9 @@ const ResultRow = memo(function ResultRow({
           </Button>
         ) : null}
         <Button
+          type="danger"
+          theme="light"
           size="small"
-          status="danger"
           icon={<IconDelete />}
           aria-label={`移除 ${entry.baseName}`}
           className={touchFriendly ? "compress-row-button--touch" : undefined}

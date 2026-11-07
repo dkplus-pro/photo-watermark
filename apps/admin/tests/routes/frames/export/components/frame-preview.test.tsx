@@ -169,7 +169,7 @@ describe("空态与出图", () => {
 
     await runPastDebounce();
     expect(container.querySelector(".frame-preview-skeleton")).not.toBeNull();
-    expect(container.querySelector(".arco-spin")).not.toBeNull();
+    expect(container.querySelector(".semi-spin")).not.toBeNull();
 
     release();
     await flushMicrotasks();

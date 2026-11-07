@@ -1,7 +1,7 @@
 # apps/admin/AGENTS.md
 
 本文件面向 AI 编码助手,是 `apps/admin`(「水印相框」纯静态批量导出工具,匿名公开受众,发布到 GitHub Pages)的架构约束规范。
-根 [AGENTS.md](../../AGENTS.md) 的通用规则(15-17)与 arco 优先(规则 4)在此继续生效;**根规则 5-10 里属于 CMS 后台的条目(列表页 search-table 范式、PageContainer 面包屑规范、分页全量、TanStack Query、orval 契约链、AuthGate)对本 app 不再适用,以本文件为准**。
+根 [AGENTS.md](../../AGENTS.md) 的通用规则(15-17)与 Semi 优先(规则 4)在此继续生效;**根规则 5-10 里属于 CMS 后台的条目(列表页 search-table 范式、PageContainer 面包屑规范、分页全量、TanStack Query、orval 契约链、AuthGate)对本 app 不再适用,以本文件为准**。
 总体方案与分阶段交付记录见 [docs/watermark-frame-plan.md](../../docs/watermark-frame-plan.md);人读的操作性指南(目录、导出链路图、资源替换、发布)见 [docs/admin.md](../../docs/admin.md)。
 违反本文件的分层与依赖方向修改会被评审与测试守卫拦截。
 
@@ -26,18 +26,19 @@ public/         # 静态资源:清单 JSON、缩略图、logo、webfont,全部�
 **依赖方向硬规则**:
 
 - `routes → {components, hooks, store, utils, config, constants}`;
-- `utils/frame/**` 对外只允许 import 同目录模块与 `constants` / `utils/asset-url` / `utils/file-name` / `utils/bitmap`(纯位图底座),以及字节处理类三方库(`exifr` / `piexifjs` / `fflate`,只在主线程侧的 exif/fields/zip-writer 等处出现);禁止 import `store` / `routes` / `hooks` / arco / react(Worker 侧模块要能在 Worker 与 node 单测里独立运行);
-- `utils/compress/**` 只允许 import 同目录模块与 `constants` / `utils/file-name` / `utils/bitmap` / `utils/worker-pool` / `utils/frame` 的 `capability`(`memoryAwareConcurrency`)与 `image-size-probe`(读头部字节;这两个是通用图像底座,评审时按「不含相框语义」把关);禁止 import `store` / `routes` / `hooks` / arco / react;
+- `utils/frame/**` 对外只允许 import 同目录模块与 `constants` / `utils/asset-url` / `utils/file-name` / `utils/bitmap`(纯位图底座),以及字节处理类三方库(`exifr` / `piexifjs` / `fflate`,只在主线程侧的 exif/fields/zip-writer 等处出现);禁止 import `store` / `routes` / `hooks` / semi / react(Worker 侧模块要能在 Worker 与 node 单测里独立运行);
+- `utils/compress/**` 只允许 import 同目录模块与 `constants` / `utils/file-name` / `utils/bitmap` / `utils/worker-pool` / `utils/frame` 的 `capability`(`memoryAwareConcurrency`)与 `image-size-probe`(读头部字节;这两个是通用图像底座,评审时按「不含相框语义」把关);禁止 import `store` / `routes` / `hooks` / semi / react;
 - `utils/frame/types.ts` 是渲染契约唯一事实源,**冻结后不得随意改形状**(新增字段可以,改签名要同步全部实现并经评审);
 - `store/**` 不得 import `utils/frame/export-pipeline` 与 `utils/compress/compress-batch`(流水线/批处理由页面编排,store 只记录状态);
 - 页面与组件禁止裸触碰 `URL.createObjectURL`、`fetch`、`new Worker`,收口位置:`utils/download.ts` + `hooks/use-object-url.ts`(Blob URL)、`utils/catalog.ts` + 导出页 `logo-settings.ts`(同源 fetch)、`utils/worker-pool.ts`(通用 Worker 池,frame/compress 经各自的 `*-pool.ts` 工厂实例化);
 
-## 2. arco 与主题
+## 2. Semi 与主题
 
-- UI 一律优先 `@arco-design/web-react` 基础组件(Card/Form/Select/Modal/Progress/Empty 等),确实不满足再自定义;
-- React 19 下 **`src/routes/layout.tsx` 文件顶部必须** `import "@arco-design/web-react/es/_util/react-19-adapter"`(只允许注释行在它之前),否则 `Message`/`Notification` 走已移除的 `ReactDOM.render` 直接崩;
-- 样式引入顺序固定:`@arco-design/web-react/dist/css/arco.css` → `@arco-themes/react-juzi001/theme.css`(芥子主题覆盖层,含 Inter 字体族声明与 `--color-*` 变量) → `src/routes/index.css`;顺序颠倒会让主题失效;
-- 不做暗色模式:不引入 `arco-theme="dark"` 分支、不在组件里写死色值,颜色一律取 Arco CSS 变量;
+- UI 一律优先 `@douyinfe/semi-ui` 基础组件(Card/Form/Select/Modal/Progress/Empty 等),确实不满足再自定义;Semi 没有的形态(如结果页)在 `src/components/` 以 Semi 基础组件封装,不引第三方 UI;
+- React 19 下 **`src/routes/layout.tsx` 文件顶部必须** `import "@douyinfe/semi-ui/react19-adapter"`(只允许注释行在它之前),否则 `Toast` 等命令式 API 与弹层走已移除的 `ReactDOM.render` 直接崩;
+- **主题用 Semi 默认主题**:样式随组件按需自动引入,不手动引 css、不引入 DSM 定制主题包;壳层与页面自定义样式(最后引入 `src/routes/index.css`)只做排布,颜色一律取 Semi 的 CSS 变量(`--semi-color-*` / `--semi-border-radius-*`);
+- Semi 的类型解析有个仓库级前置(见根 `pnpm-workspace.yaml` 的 `packageExtensions` 与根 `package.json` devDeps 的 `@types/react@^19` 锚点):Semi 发布包漏声明 `@types/react` peer,不补 peer 时它的 d.ts 会经 pnpm 隐藏提升位解析到仓库里 React 18(miniapp)的副本,与 React 19 端的组件类型冲突、typecheck 全红;补 peer 后每个 semi 包按消费方自己的 `@types/react` 解析,miniapp 的 18 副本不受影响;升级 Semi 或调整 React 大版本时如再现 `ReactNode`/`bigint` 形态的类型冲突,先查这里;
+- 不做暗色模式:不引入 Semi 的暗色主题切换、不在组件里写死色值;
 - 移动端像素适配交给 CSS(媒体查询 + 相对单位),不引入 postcss vw 方案。
 
 ## 3. 静态化纪律(本 app 的存在前提)
@@ -89,7 +90,7 @@ public/         # 静态资源:清单 JSON、缩略图、logo、webfont,全部�
 ## 7. 移动端与响应式
 
 - 断点判定统一走 `src/hooks/use-responsive.ts` 的 `useIsMobile()` / `useIsTablet()`(基于 ahooks `useResponsive`,注意它的语义是 **min-width**:`info[key] = innerWidth >= value`),禁止在组件里裸读 `window.innerWidth`;
-- **整壳适配**(决策 D12):<768px 时侧边栏 `Sider` 不渲染,同一份菜单树渲染进 `Drawer`(`placement="left"`),不允许两份菜单实例并存(选中态与展开态会分裂);纯视觉差异用 `@media`,交互差异才用 hook;
+- **整壳适配**(决策 D12):<768px 时侧边栏不渲染,同一份菜单树渲染进 Semi `SideSheet`(`placement="left"`),不允许两份菜单实例并存(选中态与展开态会分裂);桌面侧栏折叠由 zustand 状态 + 自绘触发器驱动(Semi 的 Layout.Sider 不支持受控折叠);纯视觉差异用 `@media`,交互差异才用 hook;
 - 相框列表列数:桌面 4 / 平板 3 / 手机单列;
 - 移动端批量张数 >20 时给一条软提示(内存与耗时预期,表单页与进度弹框各一处),**不阻断**(决策 D19);
 - 触摸目标 ≥44px,弹框在窄屏全宽,禁止用桌面才成立的 hover 承载唯一操作入口。

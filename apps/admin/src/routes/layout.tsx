@@ -1,11 +1,10 @@
-// React 19 下 Arco 的命令式 API(Message/Notification 等)必须先启用官方 react-19 适配器,
-// 否则内部走已移除的 ReactDOM.render 报错(见 @arco-design/web-react es/_util/react-19-adapter)。
-import "@arco-design/web-react/es/_util/react-19-adapter";
-import { ConfigProvider, Drawer, Layout as ArcoLayout, Menu } from "@arco-design/web-react";
-import { IconMenuFold, IconMenuUnfold } from "@arco-design/web-react/icon";
-import zhCN from "@arco-design/web-react/es/locale/zh-CN";
+// React 19 下 Semi 的命令式 API(Toast 等)与弹出层组件依赖官方 react19-adapter,
+// 必须先于任何 Semi 组件导入,否则动态挂载走已移除的 ReactDOM.render 报错(见 react19 官方文档)。
+import "@douyinfe/semi-ui/react19-adapter";
+import { IconIndentLeft, IconIndentRight } from "@douyinfe/semi-icons";
+import { Layout as SemiLayout, Nav, SideSheet } from "@douyinfe/semi-ui";
 import { Outlet, useLocation, useNavigate } from "@modern-js/runtime/router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import AppFooter from "../components/app-footer";
 import AuthorQrcodeFloat from "../components/author-qrcode-float";
@@ -17,12 +16,16 @@ import { useIsMobile } from "../hooks/use-responsive";
 import { useUiStore } from "../store/ui";
 import { assetUrl } from "../utils/asset-url";
 
-// 样式引入顺序硬要求:arco 基础样式 → 芥子主题覆盖层(D13)→ 壳层自定义样式。
-import "@arco-design/web-react/dist/css/arco.css";
-import "@arco-themes/react-juzi001/theme.css";
+// Semi 默认主题样式随组件按需自动引入,这里只挂壳层自定义样式(默认主题不引入额外 css)。
 import "./index.css";
 
-const { Sider, Header, Content } = ArcoLayout;
+const { Header, Content } = SemiLayout;
+
+// 目录项(有 children 的节点)不是路由:Semi Nav 的目录点击也会回调 onClick,
+// 用这个集合过滤掉,只让叶子项触发跳转。
+const DIRECTORY_KEYS = new Set(
+  sidebarMenus.filter((node) => node.children?.length).map((node) => node.path)
+);
 
 // 全局根布局:本站无鉴权、无服务端状态,壳层只做导航骨架与响应式切换。
 // 根级 ErrorBoundary 兜住壳层渲染错误,页面级 ErrorBoundary 兜住 Outlet 内错误(见阶段 9B)。
@@ -30,11 +33,9 @@ export default function Layout() {
   // PV/UV 埋点在壳层一次性装配(仅生产环境初始化,dev/单测不上报),随路由切换自动补报。
   useRum();
   return (
-    <ConfigProvider locale={zhCN}>
-      <ErrorBoundary>
-        <AppShell />
-      </ErrorBoundary>
-    </ConfigProvider>
+    <ErrorBoundary>
+      <AppShell />
+    </ErrorBoundary>
   );
 }
 
@@ -46,8 +47,9 @@ interface SideMenuProps {
   onNavigate: (key: string) => void;
 }
 
-// 菜单渲染只此一份实现:桌面 Sider 与移动 Drawer 复用同一组件,
-// 选中态与展开态由壳层持有,避免两处 Menu 的状态各自分裂。
+// 菜单渲染只此一份实现:桌面侧栏与移动 SideSheet 复用同一组件,
+// 选中态与展开态由壳层持有,避免两处 Nav 的状态各自分裂。
+// 折叠态的悬浮提示由 Semi Nav 自带(悬停显示条目文本),无需手动配置。
 function SideMenu({
   appPathname,
   openKeys,
@@ -55,43 +57,44 @@ function SideMenu({
   onOpenKeysChange,
   onNavigate
 }: SideMenuProps) {
+  // 菜单声明是静态数据,一次性映射成 Semi Nav 的 items 结构:
+  // 带 children 的目录生成嵌套 items,叶子直接平移(itemKey 即应用内路径)。
+  const navItems = useMemo(
+    () =>
+      sidebarMenus.map((node) =>
+        node.children?.length
+          ? {
+              itemKey: node.path,
+              text: node.title,
+              icon: node.icon,
+              items: node.children.map((child) => ({
+                itemKey: child.path,
+                text: child.title,
+                icon: child.icon
+              }))
+            }
+          : { itemKey: node.path, text: node.title, icon: node.icon }
+      ),
+    []
+  );
+
   return (
-    <Menu
+    <Nav
+      className="app-nav"
+      items={navItems}
       selectedKeys={[appPathname]}
       openKeys={openKeys}
-      collapse={collapse}
-      // 当前 Arco 版本(2.66)受控展开的回调是 onClickSubMenu(第二参即最新 openKeys),
-      // 修复受控模式下点击目录展开/收起失效的问题(阶段 9A)。
-      onClickSubMenu={(_, nextOpenKeys) => onOpenKeysChange(nextOpenKeys)}
-      onClickMenuItem={(key) => onNavigate(key)}
+      isCollapsed={collapse}
+      // 受控展开:回调携带最新 openKeys,壳层据此同步受控状态。
+      onOpenChange={(data) => onOpenKeysChange([...((data.openKeys ?? []) as string[])])}
+      // 目录点击只负责展开/收起(onOpenChange 已处理),过滤掉目录 key 防止跳到非路由。
+      onClick={(data) => {
+        if (typeof data.itemKey === "string" && !DIRECTORY_KEYS.has(data.itemKey)) {
+          onNavigate(data.itemKey);
+        }
+      }}
       style={{ width: "100%" }}
-    >
-      {sidebarMenus.map((node) =>
-        node.children?.length ? (
-          <Menu.SubMenu
-            key={node.path}
-            title={
-              <>
-                {node.icon}
-                <span>{node.title}</span>
-              </>
-            }
-          >
-            {node.children.map((child) => (
-              <Menu.Item key={child.path} renderItemInTooltip={() => child.title}>
-                {child.icon}
-                <span>{child.title}</span>
-              </Menu.Item>
-            ))}
-          </Menu.SubMenu>
-        ) : (
-          <Menu.Item key={node.path} renderItemInTooltip={() => node.title}>
-            {node.icon}
-            <span>{node.title}</span>
-          </Menu.Item>
-        )
-      )}
-    </Menu>
+    />
   );
 }
 
@@ -131,10 +134,11 @@ function AppShell() {
 
   return (
     <>
-      <ArcoLayout className="app-shell">
-        {/* 移动端不渲染 Sider,同一份菜单改由左侧 Drawer 承载(D12),避免两份 Menu 并存。 */}
+      {/* Semi 的 Layout.Sider 只支持断点响应式,不支持受控折叠,
+          侧栏折叠(220 ↔ 60)由 zustand 状态 + 本组件类名驱动。 */}
+      <SemiLayout className="app-shell has-sider">
         {!isMobile ? (
-          <Sider className="app-sider" width={220} collapsedWidth={60} collapsed={siderCollapsed}>
+          <aside className={`app-sider${siderCollapsed ? " app-sider-collapsed" : ""}`}>
             <div className="app-logo">
               {/* logo 图恒显示:收起后顶部是独立 logo,而不是应用名首字。
                   public 资源必须经 assetUrl 拼 basePath,裸 `/assets/...` 在子路径部署下 404。 */}
@@ -147,12 +151,12 @@ function AppShell() {
               aria-label={siderCollapsed ? "展开侧边栏" : "收起侧边栏"}
               onClick={toggleSider}
             >
-              {siderCollapsed ? <IconMenuUnfold /> : <IconMenuFold />}
+              {siderCollapsed ? <IconIndentRight /> : <IconIndentLeft />}
             </div>
             <SideMenu {...menuProps} collapse={siderCollapsed} />
-          </Sider>
+          </aside>
         ) : null}
-        <ArcoLayout className="app-main">
+        <SemiLayout className="app-main">
           {/* 顶栏:移动端左侧汉堡按钮开抽屉,右侧只放应用名(无用户区,本站无登录)。 */}
           <Header className="app-header">
             {isMobile ? (
@@ -162,7 +166,7 @@ function AppShell() {
                 aria-label={mobileNavOpen ? "关闭导航" : "打开导航"}
                 onClick={() => setMobileNavOpen(!mobileNavOpen)}
               >
-                {mobileNavOpen ? <IconMenuUnfold /> : <IconMenuFold />}
+                {mobileNavOpen ? <IconIndentRight /> : <IconIndentLeft />}
               </span>
             ) : null}
           </Header>
@@ -173,11 +177,11 @@ function AppShell() {
             </ErrorBoundary>
           </Content>
           <AppFooter />
-        </ArcoLayout>
-      </ArcoLayout>
+        </SemiLayout>
+      </SemiLayout>
       <AuthorQrcodeFloat />
       {isMobile ? (
-        <Drawer
+        <SideSheet
           className="app-nav-drawer"
           title={SYSTEM_NAME}
           placement="left"
@@ -187,7 +191,7 @@ function AppShell() {
           onCancel={() => setMobileNavOpen(false)}
         >
           <SideMenu {...menuProps} />
-        </Drawer>
+        </SideSheet>
       ) : null}
     </>
   );

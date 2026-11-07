@@ -9,7 +9,7 @@ import type { ExportFileEntry } from "../../../../../src/store/export";
  *
  * `useObjectUrl` 不打桩——它就是要验的那条生命周期(谁创建谁释放),只把它的模块边界
  * `URL.createObjectURL/revokeObjectURL` 换成可断言的替身(apps/admin/AGENTS.md 第 8 节列的
- * 合法打桩点)。 arco `Upload` 也不打桩:本组件对它的用法(只当取文件触发器、不自绘列表)
+ * 合法打桩点)。 Semi `Upload` 也不打桩:本组件对它的用法(只当取文件触发器、不自绘列表)
  * 一旦脱离真实实现就验不出来。
  *
  * 六类边界对照:空值(files 为空、object URL 生成失败)、零值(源图尺寸 0 表示「未探测」,
@@ -183,11 +183,13 @@ describe("列表渲染", () => {
 });
 
 describe("选图与删除回调", () => {
-  it("原生 input 带 accept=image/* 与 multiple(iOS 上这是唯一可靠入口)", () => {
+  it("原生 input 带 accept(image/* + heic)与 multiple(iOS 上这是唯一可靠入口)", () => {
     const { container } = renderPicker();
     const input = fileInput(container);
 
-    expect(input.getAttribute("accept")).toBe("image/*");
+    // Semi 对 accept 做 JS 硬过滤,heic 的空 file.type 过不了 image/*,
+    // 所以 accept 必须显式带上扩展名(见组件文件头注释)。
+    expect(input.getAttribute("accept")).toBe("image/*,.heic,.heif");
     expect(input.multiple).toBe(true);
   });
 
@@ -198,7 +200,7 @@ describe("选图与删除回调", () => {
 
     fireEvent.change(fileInput(container), { target: { files: [first, second] } });
 
-    // arco 的默认 beforeUpload 返回 Promise,onChange 落在微任务里,不能同步断言。
+    // onChange 落在微任务链路里,不能同步断言。
     await waitFor(() => expect(handlers.onAdd).toHaveBeenCalledTimes(2));
     expect(handlers.onAdd.mock.calls.map((call) => (call[0] as File[])[0].name)).toEqual([
       "a.jpg",
@@ -258,14 +260,14 @@ describe("选图与删除回调", () => {
 });
 
 describe("拖拽与端型差异", () => {
-  it("桌面渲染 arco 拖拽区,拖入文件即等价于选图", async () => {
+  it("桌面渲染 Semi 拖拽区,拖入文件即等价于选图", async () => {
     const { container } = renderPicker();
-    const dropZone = container.querySelector(".arco-upload-trigger-drag");
+    const dropZone = container.querySelector(".semi-upload-drag-area");
 
     expect(dropZone).not.toBeNull();
     fireEvent.drop(dropZone as HTMLElement, {
-      // arco 的 drop 读 dataTransfer.files 与 items(items 用来剔掉目录),两者都得给。
-      dataTransfer: { files: [makeFile("dropped.jpg")], items: [] }
+      // Semi 的 drop 只读 dataTransfer.files。
+      dataTransfer: { files: [makeFile("dropped.jpg")] }
     });
     // 与点选同一条异步链路(先建 UploadItem 再回调),同步断言会早一拍。
     await waitFor(() => expect(handlers.onAdd).toHaveBeenCalledTimes(1));
@@ -276,11 +278,12 @@ describe("拖拽与端型差异", () => {
     responsiveMock.isMobile = true;
     const { container } = renderPicker();
 
-    expect(container.querySelector(".arco-upload-trigger-drag")).toBeNull();
-    expect(screen.getByRole("button", { name: /选择照片/u })).toBeInTheDocument();
+    expect(container.querySelector(".semi-upload-drag-area")).toBeNull();
     expect(container.querySelector(".image-picker-trigger")).not.toBeNull();
+    // Semi 非 draggable 模式会再包一层 role="button" 的触发容器,同名按钮不止一个。
+    expect(screen.getAllByRole("button", { name: /选择照片/u }).length).toBeGreaterThan(0);
     // 入口仍然只是那个原生 file input,点击不该发请求。
-    await userEvent.click(screen.getByRole("button", { name: /选择照片/u }));
+    await userEvent.click(container.querySelector(".image-picker-trigger") as HTMLElement);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -301,7 +304,7 @@ describe("D19 软提示", () => {
     responsiveMock.isMobile = true;
     const { container, rerender } = renderPicker({ files: makeEntries(20) });
 
-    expect(container.querySelector(".arco-alert")).toBeNull();
+    expect(container.querySelector(".semi-banner")).toBeNull();
 
     rerender(
       <ImagePicker
@@ -315,21 +318,21 @@ describe("D19 软提示", () => {
     );
     expect(screen.getByText(/一次选择 20 张以上会较慢且占内存/u)).toBeInTheDocument();
     // 非阻断:提示出现后删除与清空依旧可用。
-    expect(container.querySelector(".arco-alert-error")).toBeNull();
+    expect(container.querySelector(".semi-banner-danger")).toBeNull();
     expect(screen.getByRole("button", { name: /清空/u })).toBeEnabled();
   });
 
   it("桌面同样张数不提示(预算是移动的 4 倍,D19 讲的是移动端)", () => {
     const { container } = renderPicker({ files: makeEntries(21) });
 
-    expect(container.querySelector(".arco-alert")).toBeNull();
+    expect(container.querySelector(".semi-banner")).toBeNull();
   });
 
   it("越界:阈值为 0、负数、NaN、Infinity 时一律不提示", () => {
     responsiveMock.isMobile = true;
     for (const softLimit of [0, -20, Number.NaN, Number.POSITIVE_INFINITY]) {
       const { container, unmount } = renderPicker({ files: makeEntries(3), softLimit });
-      expect(container.querySelector(".arco-alert")).toBeNull();
+      expect(container.querySelector(".semi-banner")).toBeNull();
       unmount();
     }
   });
@@ -343,18 +346,18 @@ describe("导出进行中禁用", () => {
     expect(screen.getByRole("button", { name: /移除 photo-1/u })).toBeDisabled();
 
     await userEvent.click(screen.getByRole("button", { name: /移除 photo-1/u }), {
-      // arco 的禁用按钮仍吞掉事件,这里连点击事件都拿不到回调即为通过。
+      // Semi 的禁用按钮仍吞掉事件,这里连点击事件都拿不到回调即为通过。
       pointerEventsCheck: 0
     });
     await userEvent.click(screen.getByRole("button", { name: /清空/u }), { pointerEventsCheck: 0 });
     expect(handlers.onRemove).not.toHaveBeenCalled();
     expect(handlers.onClear).not.toHaveBeenCalled();
-    expect(container.querySelector(".arco-btn-disabled")).not.toBeNull();
+    expect(container.querySelector(".semi-button-disabled")).not.toBeNull();
   });
 
   it("disabled 时拖入文件不改列表(流水线在跑,列表中途变会让批次与进度对不上)", () => {
     const { container } = renderPicker({ disabled: true });
-    const dropZone = container.querySelector(".arco-upload-trigger-drag") as HTMLElement;
+    const dropZone = container.querySelector(".semi-upload-drag-area") as HTMLElement;
 
     fireEvent.drop(dropZone, { dataTransfer: { files: [makeFile("late.jpg")] } });
     expect(handlers.onAdd).not.toHaveBeenCalled();

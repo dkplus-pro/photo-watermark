@@ -22,12 +22,12 @@
 // 行数豁免(apps/admin/AGENTS.md 第 9 节「测试文件的唯一豁免」):本文件只覆盖 **一个** 被测模块
 // (page.tsx 的装配)。再按关注点拆,要么把同一次渲染的同一个上下文切成三四份、要么在每个兄弟文件
 // 里重抄一遍受提升语义限制的 vi.mock 形状(九条 mock 边界),只会制造漂移。
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-// arco 内部走 findDOMNode(React 19 已移除);真机由 routes/layout.tsx 补适配层,这里同口径。
-import "@arco-design/web-react/es/_util/react-19-adapter";
+// Semi 的弹层能力在 React 19 下需要 react19-adapter 注入 createRoot;真机由 routes/layout.tsx 补,这里同口径。
+import "@douyinfe/semi-ui/react19-adapter";
 
 // 脚手架必须排在被测源码之前:下面的 vi.mock 工厂引用它的替身对象(vi.mock 会被提到顶部注册,
 // 但工厂在被 mock 的模块被求值那一刻才执行,顺序错了就是 TDZ)。
@@ -128,8 +128,8 @@ vi.mock("../../../../src/routes/frames/[styleId]/export/components/frame-preview
 
 import FrameExportPage from "../../../../src/routes/frames/[styleId]/export/page";
 
-/** 底部吸底操作条主按钮的文案(page.tsx 里就是这两个字)。 */
-const EXPORT_BUTTON = "导出";
+/** 底部吸底操作条主按钮的名称(Semi 图标自带 aria-label,name 是「download导出」,用正则匹配)。 */
+const EXPORT_BUTTON = /导出/u;
 
 interface CapturedRun {
   files: readonly File[];
@@ -198,7 +198,9 @@ async function addPreparedFiles(count: number): Promise<File[]> {
 }
 
 async function clickExport(): Promise<CapturedRun> {
-  await userEvent.click(screen.getByRole("button", { name: EXPORT_BUTTON }));
+  // exporting 中弹框的「取消导出」也在文档里,/导出/ 会双双命中,故把查询圈进吸底操作条。
+  const actions = document.querySelector(".export-actions") as HTMLElement;
+  await userEvent.click(within(actions).getByRole("button", { name: EXPORT_BUTTON }));
   const run = runs[runs.length - 1];
   if (!run) throw new Error("点「导出」后没有调流水线");
   return run;
@@ -218,13 +220,13 @@ function layoutCols(container: HTMLElement): HTMLElement[] {
   const row = container.querySelector<HTMLElement>(".export-layout");
   if (!row) throw new Error("主布局 Row 未渲染");
   return Array.from(row.children).filter((node) =>
-    (node as HTMLElement).className.includes("arco-col")
+    (node as HTMLElement).className.includes("semi-col")
   ) as HTMLElement[];
 }
 
-/** arco Col 的 span 落在类名上(arco-col-16 / -8),用它断言列宽。 */
+/** Semi Col 的 span 落在类名上(semi-col-16 / -8),用它断言列宽。 */
 function spanOf(col: HTMLElement): string {
-  return col.className.match(/arco-col-(\d+)/u)?.[1] ?? "";
+  return col.className.match(/semi-col-(\d+)/u)?.[1] ?? "";
 }
 
 /** 某个范围里装了哪些子组件替身,顺序即 DOM 顺序。 */
@@ -256,7 +258,7 @@ describe("地址守卫", () => {
     exportTestDoubles.catalog.loading = true;
     const { container } = renderExportPage();
 
-    expect(container.querySelector(".arco-skeleton")).not.toBeNull();
+    expect(container.querySelector(".semi-skeleton")).not.toBeNull();
     expect(container.querySelectorAll("[data-picker]")).toHaveLength(0);
     expect(screen.getByRole("button", { name: EXPORT_BUTTON })).toBeDisabled();
   });
@@ -271,7 +273,7 @@ describe("地址守卫", () => {
     expect(screen.getByText("相框清单装载失败")).toBeInTheDocument();
     expect(screen.getByText("frames.json 请求失败")).toBeInTheDocument();
     expect(screen.queryByText("样式不存在")).not.toBeInTheDocument();
-    expect(container.querySelector(".arco-skeleton")).toBeNull();
+    expect(container.querySelector(".semi-skeleton")).toBeNull();
     expect(container.querySelectorAll("[data-picker]")).toHaveLength(0);
     // 样式没定 → 导出按钮禁用,错误页不许留下可点的导出入口。
     expect(screen.getByRole("button", { name: EXPORT_BUTTON })).toBeDisabled();
@@ -472,7 +474,9 @@ describe("导出主流程", () => {
     await addPreparedFiles(2);
 
     const first = await clickExport();
-    await userEvent.click(screen.getByRole("button", { name: EXPORT_BUTTON }));
+    // exporting 中弹框的「取消导出」也在文档里,第二次点击同样圈进吸底操作条。
+    const actions = document.querySelector(".export-actions") as HTMLElement;
+    await userEvent.click(within(actions).getByRole("button", { name: EXPORT_BUTTON }));
     expect(exportTestDoubles.runFrameExport).toHaveBeenCalledTimes(1);
     expect(storeState()).toMatchObject({ status: "exporting", total: 2 });
 
@@ -755,8 +759,8 @@ describe("栅格与移动端", () => {
     expect(container.querySelector(".export-layout--mobile")).not.toBeNull();
     expect(cols).toHaveLength(2);
     expect(spanOf(formCol)).toBe("24");
-    // 单列时预览必须占满 24:`24 - formSpan` 反算出的 span 0 会被 arco 的
-    // `.arco-col-0{display:none}` 整块藏掉,所以 page.tsx 对移动端显式给满宽。
+    // 单列时预览必须占满 24:`24 - formSpan` 反算出的 span 0 会被栅格的
+    // `.semi-col-0{display:none}` 整块藏掉,所以 page.tsx 对移动端显式给满宽。
     expect(spanOf(previewCol)).toBe("24");
     expect(pickerLabelsIn(formCol.parentElement as HTMLElement)).toEqual([
       "image",

@@ -1,5 +1,5 @@
-import { Skeleton } from "@arco-design/web-react";
-import { IconRight } from "@arco-design/web-react/icon";
+import { IconChevronRight } from "@douyinfe/semi-icons";
+import { Skeleton } from "@douyinfe/semi-ui";
 import { useNavigate } from "@modern-js/runtime/router";
 import type { MouseEvent } from "react";
 
@@ -51,7 +51,7 @@ export default function FrameCard({ entry }: FrameCardProps) {
       {/* 移动端没有 hover,这一行是常驻可见的进入标记。 */}
       <div className="frame-card-cta">
         <span>去导出</span>
-        <IconRight />
+        <IconChevronRight />
       </div>
     </a>
   );
@@ -64,12 +64,13 @@ export function FrameCardPlaceholder() {
       <div className="frame-card-media">
         <Skeleton
           className="frame-card-placeholder-figure"
-          image={{ shape: "square" }}
-          text={false}
+          loading
+          placeholder={<Skeleton.Image />}
         />
       </div>
       <div className="frame-card-placeholder-name">
-        <Skeleton image={false} text={{ rows: 1, width: "60%" }} />
+        {/* Semi 的 Skeleton.Paragraph 不支持逐行宽度,按行数出默认占位行。 */}
+        <Skeleton loading placeholder={<Skeleton.Paragraph rows={1} />} />
       </div>
     </div>
   );

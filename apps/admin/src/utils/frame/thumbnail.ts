@@ -18,7 +18,7 @@ import type { MakePhotoThumbnail, OutputSize } from "./types";
  * 产一张独立小图,列表只解码这几百 KB 的缩略图。
  *
  * 与 `preview-render` 同一套纪律:纯比例算术单独导出给单测,jsdom 没有 canvas 也能钉住;
- * 依赖纪律与 utils/frame 其余模块一致,不 import react / hooks / store / arco。
+ * 依赖纪律与 utils/frame 其余模块一致,不 import react / hooks / store / semi。
  */
 
 /** 缩略图 JPEG 质量:列表缩略位只有排版判断价值,0.8 下长边 320px 约 10-30KB。 */

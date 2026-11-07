@@ -1,7 +1,9 @@
-import { Button, Result } from "@arco-design/web-react";
+import { Button } from "@douyinfe/semi-ui";
 import { useNavigate } from "@modern-js/runtime/router";
 
-// 404 异常页(样式对齐 arco-design-pro),被兜底路由与动态路由分发器复用。
+import Result from "./result";
+
+// 404 异常页(Semi Result 原生支持 404 插图),被兜底路由与动态路由分发器复用。
 export default function NotFoundPage() {
   const navigate = useNavigate();
 
@@ -11,7 +13,7 @@ export default function NotFoundPage() {
       title="404"
       subTitle="抱歉,您访问的页面不存在"
       extra={
-        <Button type="primary" onClick={() => navigate("/")}>
+        <Button type="primary" theme="solid" onClick={() => navigate("/")}>
           返回首页
         </Button>
       }

@@ -60,26 +60,26 @@ function renderPicker(overrides: Partial<LogoPickerProps> = {}) {
   return render(<LogoPicker {...props} />);
 }
 
-/** 下拉挂在 body(arco Trigger 传送门):先点触发器展开,再从全文档查选项。 */
+/** 下拉挂在 body(Semi Trigger 传送门):先点触发器展开,再从全文档查选项。 */
 function openDropdown(container: HTMLElement): void {
-  fireEvent.click(container.querySelector(".arco-select-view") as HTMLElement);
+  fireEvent.click(container.querySelector(".semi-select") as HTMLElement);
 }
 
 /** 下拉选项的文本顺序就是合成列表的顺序,这是本组件唯一自己决定的事。 */
 function optionTexts(): string[] {
-  return Array.from(document.querySelectorAll(".arco-select-option")).map(
+  return Array.from(document.querySelectorAll(".semi-select-option")).map(
     (node) => node.textContent ?? ""
   );
 }
 
 function selectedOptionTexts(): string[] {
-  return Array.from(document.querySelectorAll('.arco-select-option[aria-selected="true"]')).map(
+  return Array.from(document.querySelectorAll('.semi-select-option[aria-selected="true"]')).map(
     (node) => node.textContent ?? ""
   );
 }
 
 function optionByText(text: string): HTMLElement {
-  const option = Array.from(document.querySelectorAll(".arco-select-option")).find((node) =>
+  const option = Array.from(document.querySelectorAll(".semi-select-option")).find((node) =>
     (node.textContent ?? "").includes(text)
   );
   if (!option) throw new Error(`下拉里没有含「${text}」的选项`);
@@ -142,7 +142,7 @@ describe("选项集合与顺序", () => {
     openDropdown(container);
 
     expect(optionTexts()).toEqual(["不添加", "自定义 logo"]);
-    expect(container.querySelector(".arco-select-view")).not.toBeNull();
+    expect(container.querySelector(".semi-select")).not.toBeNull();
   });
 
   it("越界:id 撞上两个哨兵值、条目为 null、缺 id 的脏数据一律丢掉,不允许两个 option 共用 value", () => {
@@ -186,8 +186,8 @@ describe("选项集合与顺序", () => {
   it("装载中只出骨架:选项还没成形时不渲染触发器,免得用户点到一个待会儿会消失的 id", () => {
     const { container } = renderPicker({ loading: true });
 
-    expect(container.querySelector(".arco-select-view")).toBeNull();
-    expect(container.querySelector(".arco-skeleton")).not.toBeNull();
+    expect(container.querySelector(".semi-select")).toBeNull();
+    expect(container.querySelector(".semi-skeleton")).not.toBeNull();
   });
 });
 
@@ -245,17 +245,17 @@ describe("选中回调", () => {
     const { container } = renderPicker({ disabled: true });
 
     openDropdown(container);
-    expect(container.querySelector(".arco-select-disabled")).not.toBeNull();
+    expect(container.querySelector(".semi-select-disabled")).not.toBeNull();
     expect(optionTexts()).toEqual([]);
     expect(handlers.onChange).not.toHaveBeenCalled();
   });
 });
 
 describe("搜索过滤", () => {
-  /** 展开后往触发器的搜索 input 里打字(arco 由此驱动过滤)。 */
+  /** 展开后往触发器的搜索 input 里打字(Semi 由函数型 filter 驱动过滤)。 */
   async function search(container: HTMLElement, keyword: string): Promise<string[]> {
-    const input = container.querySelector(".arco-select-view-input") as HTMLInputElement | null;
-    if (!input) throw new Error("showSearch 开着却找不到搜索输入框");
+    const input = container.querySelector(".semi-select input") as HTMLInputElement | null;
+    if (!input) throw new Error("filter 开着却找不到搜索输入框");
     await act(async () => {
       fireEvent.change(input, { target: { value: keyword } });
     });
@@ -302,7 +302,8 @@ describe("自定义 logo 一条闭环", () => {
     const { container } = renderPicker({ value: CUSTOM_LOGO_ID });
 
     expect(container.querySelector(".logo-picker-custom")).not.toBeNull();
-    expect(screen.getByRole("button", { name: /选择 logo 图片/u })).toBeInTheDocument();
+    // Semi 非 draggable 的 Upload 会再包一层 role="button" 触发容器,同名按钮不止一个。
+    expect(screen.getAllByRole("button", { name: /选择 logo 图片/u }).length).toBeGreaterThan(0);
     expect(screen.getByText(/还没有选择自定义图片/u)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /移除/u })).toBeNull();
   });
@@ -313,7 +314,7 @@ describe("自定义 logo 一条闭环", () => {
 
     fireEvent.change(fileInput(container), { target: { files: [file] } });
 
-    // arco 的默认 beforeUpload 返回 Promise,onChange 落在微任务里。
+    // Semi 的选图 onChange 落在微任务链路里。
     await waitFor(() => expect(handlers.onCustomFile).toHaveBeenCalledTimes(1));
     expect(handlers.onCustomFile.mock.calls[0][0]).toBe(file);
     // 本组件是受控件:customFile 由页面喂回来,所以这一段验的是「喂回来就显示」。
@@ -333,8 +334,10 @@ describe("自定义 logo 一条闭环", () => {
       />
     );
     expect(screen.getByText("brand.png")).toBeInTheDocument();
+    // Semi 的 Upload 选中文件时会先为自己的内部列表建一条 URL(blob:logo-1),
+    // 页面喂回 customFile 后 useObjectUrl 建的是第二条(blob:logo-2)。
     expect(container.querySelector(".logo-picker-custom img")?.getAttribute("src")).toBe(
-      "blob:logo-1"
+      "blob:logo-2"
     );
   });
 
@@ -413,15 +416,15 @@ describe("自定义 logo 一条闭环", () => {
   it("disabled 且没图时入口按钮是灰的,直接喂 input 也不回调", async () => {
     const { container } = renderPicker({ value: CUSTOM_LOGO_ID, disabled: true });
 
-    // arco 的 disabled 不删隐藏 input(浏览器仍可能把文件塞进来),所以这条要验到回调层。
-    const trigger = screen.getByRole("button", { name: /选择 logo 图片/u });
+    // Semi 的 disabled 不删隐藏 input(浏览器仍可能把文件塞进来),所以这条要验到回调层。
+    const trigger = container.querySelector(".logo-picker-custom button") as HTMLElement;
     fireEvent.click(trigger);
-    // 派发要包在 act 里:arco 收到 change 后会 setState(它自己的内部列表),不包就是 act 警告。
+    // 派发要包在 act 里:Semi 收到 change 后会 setState(它自己的内部列表),不包就是 act 警告。
     await act(async () => {
       fireEvent.change(fileInput(container), { target: { files: [makeLogoFile("c.png")] } });
     });
 
-    expect(trigger.className).toContain("arco-btn-disabled");
+    expect(trigger.className).toContain("semi-button-disabled");
     expect(handlers.onCustomFile).not.toHaveBeenCalled();
     expect(screen.getByText(/还没有选择自定义图片/u)).toBeInTheDocument();
   });
@@ -440,15 +443,21 @@ describe("logo大小滑杆", () => {
     const { container } = renderPicker({ logoSize: 7 });
 
     expect(screen.getByText("logo大小")).toBeInTheDocument();
-    expect(container.querySelector(".arco-slider")).not.toBeNull();
-    // showTicks:整数档位的刻度线必须真的渲染出来,滑杆才是「档位选择」而不是连续量。
-    expect(container.querySelector(".arco-slider-ticks")).not.toBeNull();
-    expect(screen.getByText("7")).toBeInTheDocument();
+    expect(container.querySelector(".semi-slider")).not.toBeNull();
+    // marks:整数档位的刻度点必须真的渲染出来,滑杆才是「档位选择」而不是连续量。
+    expect(container.querySelector(".semi-slider-dots")).not.toBeNull();
+    // 当前档位 7 同时也是 marks 标签之一,触发器侧的数值回显用类名圈定。
+    expect(
+      Array.from(container.querySelectorAll(".semi-slider-mark")).some(
+        (node) => node.textContent === "7"
+      )
+    ).toBe(true);
+    expect(container.querySelector(".logo-size-value")?.textContent).toBe("7");
   });
 
   it("受控件:value 完全由页面喂,档位不变时不重复回调", () => {
     const { rerender, container } = renderPicker({ logoSize: 7 });
-    const first = container.querySelector(".arco-slider");
+    const first = container.querySelector(".semi-slider");
 
     rerender(
       <LogoPicker
@@ -464,6 +473,6 @@ describe("logo大小滑杆", () => {
       />
     );
     expect(handlers.onLogoSizeChange).not.toHaveBeenCalled();
-    expect(container.querySelector(".arco-slider")).toBe(first);
+    expect(container.querySelector(".semi-slider")).toBe(first);
   });
 });
